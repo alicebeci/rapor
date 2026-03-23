@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
 
-    <title>Adres Verileri Temel Raporu</title>
+    <title>Adres Verileri Raporu</title>
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/svg+xml" href="icon.svg">
 
@@ -149,7 +149,7 @@
     <header class="app-header fixed top-0 w-full z-50 flex justify-between items-center px-6 py-4">
         <div class="flex items-center gap-3">
             <span class="material-symbols-outlined text-3xl text-[#4CAF50] dark:text-[#adc6ff]">analytics</span>
-            <h1 class="text-xl md:text-2xl font-black tracking-tighter font-headline">Adres Verileri Temel Raporu</h1>
+            <h1 class="text-xl md:text-2xl font-black tracking-tighter font-headline">Adres Verileri Raporu</h1>
         </div>
         <div class="flex items-center gap-4">
             <button onclick="toggleTheme()" class="theme-toggle" aria-label="Toggle theme">
@@ -166,7 +166,7 @@
                 <div>
                     <h2 class="text-2xl md:text-3xl font-black tracking-tight flex items-center gap-3">
                         <span class="material-symbols-outlined text-3xl text-[#4CAF50] dark:text-[#adc6ff]">analytics</span>
-                        Adres Verileri Temel Raporu
+                        Adres Verileri Raporu
                     </h2>
                     <p class="text-slate-500 dark:text-[#c2c6d6] mt-2 flex items-center gap-2">
                         <span class="material-symbols-outlined text-sm">location_city</span>
@@ -595,7 +595,7 @@
         function openShareModal() {
             const modal = document.getElementById('shareModal');
             const linkBox = document.getElementById('shareLinkBox');
-            const analysisData = { pdf: pdfData, excel: excelData, timestamp: new Date().toISOString(), createdBy: 'Adres Verileri Temel Raporu Kullanıcısı' };
+            const analysisData = { pdf: pdfData, excel: excelData, timestamp: new Date().toISOString(), createdBy: 'Adres Verileri Raporu Kullanıcısı' };
             try {
                 const jsonString = JSON.stringify(analysisData);
                 const compressed = btoa(unescape(encodeURIComponent(jsonString)));
@@ -647,7 +647,7 @@
         function shareViaNative() {
             const linkBox = document.getElementById('shareLinkBox');
             const url = linkBox.dataset.url;
-            const shareData = { title: 'Adres Verileri Temel Raporu', text: `${pdfData?.ilceAdi || excelData?.ilceAdi || 'İlçe'} analiz raporu`, url: url };
+            const shareData = { title: 'Adres Verileri Raporu', text: `${pdfData?.ilceAdi || excelData?.ilceAdi || 'İlçe'} analiz raporu`, url: url };
             if (navigator.share) navigator.share(shareData).catch(() => {});
             else window.open(`https://wa.me/?text=${encodeURIComponent(shareData.text + '\n\n' + url)}`, '_blank');
         }
