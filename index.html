@@ -20,7 +20,8 @@
     <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+
 
     <script>
         tailwind.config = {
@@ -93,7 +94,7 @@
         }
 
         html:not(.dark) body {
-            background-color: #f8fafc;
+            background-color: #F0EEE6;
             background-image: radial-gradient(at 0% 0%, rgba(76, 175, 80, 0.08) 0px, transparent 50%), radial-gradient(at 100% 0%, rgba(255, 152, 0, 0.06) 0px, transparent 50%), radial-gradient(at 50% 100%, rgba(33, 150, 243, 0.05) 0px, transparent 50%);
             background-attachment: fixed;
         }
@@ -118,22 +119,6 @@
             -webkit-backdrop-filter: blur(24px);
             border: 1px solid rgba(255, 255, 255, 0.05);
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
-        }
-
-        html:not(.dark) .floating-nav {
-            background: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(32px);
-            -webkit-backdrop-filter: blur(32px);
-            border-top: 1px solid rgba(0, 0, 0, 0.05);
-            box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.1);
-        }
-
-        html.dark .floating-nav {
-            background: rgba(30, 34, 45, 0.6);
-            backdrop-filter: blur(32px);
-            -webkit-backdrop-filter: blur(32px);
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
-            box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.3);
         }
 
         html:not(.dark) .app-header {
@@ -491,6 +476,18 @@
             backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
+
+        @media print {
+            body { background: white !important; background-image: none !important; color: #000 !important; padding: 0 !important; margin: 0 !important; }
+            header, #uploadSection, #resetBtn, #newAnalysisBtn, #combinedBtn, #shareBtn, #loading, #error, .share-modal, footer, .chart-toggle, .app-header { display: none !important; }
+            main { padding: 0 !important; margin: 0 !important; max-width: 100% !important; }
+            .glass-card, .shared-banner { background: white !important; border: 1px solid #e5e7eb !important; color: #000 !important; box-shadow: none !important; backdrop-filter: none !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            .chart-container { display: block !important; height: 350px !important; page-break-inside: avoid; }
+            .table-container { max-height: none !important; overflow: visible !important; }
+            .stat-card-mesken, .stat-card-isyeri, .stat-card-grand, [class*="bg-gradient"] { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            .result { display: block !important; }
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        }
     </style>
 </head>
 
@@ -523,8 +520,7 @@
                         İlçe yapı ve bağımsız bölüm analizi
                     </p>
                 </div>
-                <button
-                    class="install-btn hidden px-6 py-3 bg-slate-800 dark:bg-white text-white dark:text-slate-900 rounded-full font-semibold text-sm hover:scale-105 transition-transform"
+                <button id="installBtn" class="install-btn hidden px-6 py-3 bg-slate-800 dark:bg-white text-white dark:text-slate-900 rounded-full font-semibold text-sm hover:scale-105 transition-transform"
                     onclick="installPWA()">
                     <span class="material-symbols-outlined text-sm mr-2">download</span>
                     Ana Ekrana Ekle
@@ -661,9 +657,9 @@
                 </button>
                 <button
                     class="w-full py-4 rounded-2xl font-bold border-2 border-orange-200 dark:border-orange-500/30 text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-500/10 flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
-                    onclick="downloadAsImage()">
-                    <span class="material-symbols-outlined">image</span>
-                    Resim (PNG) Olarak İndir
+                    onclick="exportAsHTML(this)">
+                    <span class="material-symbols-outlined">html</span>
+                    HTML Olarak İndir (Offline)
                 </button>
             </div>
         </div>
@@ -1010,14 +1006,16 @@
             const webLayout = container.closest('.web-layout');
             const canvasId = container.querySelector('canvas')?.id;
 
-            if (!container.classList.contains('hidden')) {
+            if (!container.classList.contains('hidden') && container.style.display !== 'none') {
                 // Kapat
                 container.classList.add('hidden');
+                container.style.display = 'none';
                 icon.textContent = '▼';
                 if (webLayout) webLayout.classList.remove('has-chart');
             } else {
                 // Aç
                 container.classList.remove('hidden');
+                container.style.display = 'block';
                 icon.textContent = '▲';
                 if (webLayout) webLayout.classList.add('has-chart');
 
@@ -1026,54 +1024,45 @@
                     setTimeout(() => {
                         if (canvasId === 'pdfChart' && pdfData) renderPDFChart(pdfData);
                         else if (canvasId === 'excelChart' && excelData) renderExcelChart(excelData);
-                        else if (canvasId === 'combinedExcelChart' && excelData) renderCombinedExcelChart(excelData);
-                        else if (canvasId === 'combinedPdfChart' && pdfData) renderCombinedPdfChart(pdfData);
+                        else if (canvasId === 'combinedExcelChart' && excelData) renderExcelChart(excelData, 'combinedExcelChart', 'combinedExcel');
+                        else if (canvasId === 'combinedPdfChart' && pdfData) renderPDFChart(pdfData, 'combinedPdfChart', 'combinedPdf');
                     }, 50);
                 }
             }
         }
 
-        function renderPDFChart(data) {
-            const ctx = document.getElementById('pdfChart').getContext('2d');
-            if (charts.pdf) charts.pdf.destroy();
+        function pct(val, total) { if(total===0)return'0'; const p=(val/total)*100; if(p===0)return'0'; if(p<1)return p.toFixed(2); return p.toFixed(1); }
+
+        function getSafeData(arr, total) {
+            const minAllowed = total * 0.01;
+            return arr.map(v => (v > 0 && v < minAllowed) ? minAllowed : v);
+        }
+
+        const customTooltip = { callbacks: { label: function(context) { return ' ' + context.label; } } };
+
+        function renderPDFChart(data, canvasId = 'pdfChart', key = 'pdf') {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            if (charts[key]) charts[key].destroy();
             const isDark = document.documentElement.classList.contains('dark');
-            charts.pdf = new Chart(ctx, {
+            const t = data.meskenToplam + data.isyeri;
+            const safeData = getSafeData([data.meskenToplam, data.isyeri], t);
+            charts[key] = new Chart(ctx, {
                 type: 'doughnut',
-                data: { labels: [`Mesken (${data.meskenToplam})`, `İşyeri (${data.isyeri})`], datasets: [{ data: [data.meskenToplam, data.isyeri], backgroundColor: ['#4CAF50', '#FF9800'], borderWidth: 0 }] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { padding: 20, usePointStyle: true, font: { size: 12 }, color: isDark ? '#c2c6d6' : '#475569' } } } }
+                data: { labels: [`Mesken (${data.meskenToplam.toLocaleString('tr-TR')}) %${pct(data.meskenToplam, t)}`, `İşyeri (${data.isyeri.toLocaleString('tr-TR')}) %${pct(data.isyeri, t)}`], datasets: [{ data: safeData, backgroundColor: ['#4CAF50', '#FF9800'], borderWidth: 0 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { tooltip: customTooltip, legend: { position: 'bottom', labels: { padding: 20, usePointStyle: true, font: { size: key.startsWith('combined') ? 11 : 12 }, color: isDark ? '#c2c6d6' : '#475569' } } } }
             });
         }
 
-        function renderExcelChart(data) {
-            const ctx = document.getElementById('excelChart').getContext('2d');
-            if (charts.excel) charts.excel.destroy();
+        function renderExcelChart(data, canvasId = 'excelChart', key = 'excel') {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            if (charts[key]) charts[key].destroy();
             const isDark = document.documentElement.classList.contains('dark');
-            charts.excel = new Chart(ctx, {
+            const t = data.genelToplam.toplam;
+            const safeData = getSafeData([data.genelToplam.mesken, data.genelToplam.kamu, data.genelToplam.isyeri], t);
+            charts[key] = new Chart(ctx, {
                 type: 'doughnut',
-                data: { labels: [`Mesken (${data.genelToplam.mesken})`, `Kamu (${data.genelToplam.kamu})`, `İşyeri (${data.genelToplam.isyeri})`], datasets: [{ data: [data.genelToplam.mesken, data.genelToplam.kamu, data.genelToplam.isyeri], backgroundColor: ['#4CAF50', '#2196F3', '#FF9800'], borderWidth: 2, borderColor: isDark ? '#1d2027' : '#ffffff' }] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { padding: 20, usePointStyle: true, color: isDark ? '#c2c6d6' : '#475569' } } } }
-            });
-        }
-
-        function renderCombinedExcelChart(data) {
-            const ctx = document.getElementById('combinedExcelChart').getContext('2d');
-            if (charts.combinedExcel) charts.combinedExcel.destroy();
-            const isDark = document.documentElement.classList.contains('dark');
-            charts.combinedExcel = new Chart(ctx, {
-                type: 'doughnut',
-                data: { labels: [`Mesken (${data.genelToplam.mesken})`, `Kamu (${data.genelToplam.kamu})`, `İşyeri (${data.genelToplam.isyeri})`], datasets: [{ data: [data.genelToplam.mesken, data.genelToplam.kamu, data.genelToplam.isyeri], backgroundColor: ['#4CAF50', '#2196F3', '#FF9800'], borderWidth: 2, borderColor: isDark ? '#1d2027' : '#ffffff' }] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { padding: 20, usePointStyle: true, font: { size: 11 }, color: isDark ? '#c2c6d6' : '#475569' } } } }
-            });
-        }
-
-        function renderCombinedPdfChart(data) {
-            const ctx = document.getElementById('combinedPdfChart').getContext('2d');
-            if (charts.combinedPdf) charts.combinedPdf.destroy();
-            const isDark = document.documentElement.classList.contains('dark');
-            charts.combinedPdf = new Chart(ctx, {
-                type: 'doughnut',
-                data: { labels: [`Mesken (${data.meskenToplam})`, `İşyeri (${data.isyeri})`], datasets: [{ data: [data.meskenToplam, data.isyeri], backgroundColor: ['#4CAF50', '#FF9800'], borderWidth: 2, borderColor: isDark ? '#1d2027' : '#ffffff' }] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { padding: 20, usePointStyle: true, font: { size: 11 }, color: isDark ? '#c2c6d6' : '#475569' } } } }
+                data: { labels: [`Mesken (${data.genelToplam.mesken.toLocaleString('tr-TR')}) %${pct(data.genelToplam.mesken, t)}`, `Kamu (${data.genelToplam.kamu.toLocaleString('tr-TR')}) %${pct(data.genelToplam.kamu, t)}`, `İşyeri (${data.genelToplam.isyeri.toLocaleString('tr-TR')}) %${pct(data.genelToplam.isyeri, t)}`], datasets: [{ data: safeData, backgroundColor: ['#4CAF50', '#2196F3', '#FF9800'], borderWidth: 2, borderColor: isDark ? '#1d2027' : '#ffffff' }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { tooltip: customTooltip, legend: { position: 'bottom', labels: { padding: 20, usePointStyle: true, font: { size: key.startsWith('combined') ? 11 : 12 }, color: isDark ? '#c2c6d6' : '#475569' } } } }
             });
         }
 
@@ -1137,39 +1126,127 @@
             else window.open(`https://wa.me/?text=${encodeURIComponent(shareData.text + '\n\n' + url)}`, '_blank');
         }
 
-        async function downloadAsImage() {
+        function exportAsHTML(btn) {
             const resultDiv = document.getElementById('result');
             if (!resultDiv || resultDiv.classList.contains('hidden') || resultDiv.innerHTML.trim() === '') {
                 alert('Önce raporu görüntülemelisiniz.');
                 return;
             }
+
             
-            const btn = event.currentTarget;
             const originalHtml = btn.innerHTML;
-            btn.innerHTML = '<div class="spinner text-orange-500"></div> İndiriliyor...';
+            btn.innerHTML = '<div class="spinner text-orange-500"></div> Çıkarılıyor...';
             btn.disabled = true;
 
-            try {
-                const canvas = await html2canvas(resultDiv, {
-                    scale: 2,
-                    useCORS: true,
-                    backgroundColor: document.documentElement.classList.contains('dark') ? '#10131a' : '#f8fafc'
-                });
-                
-                const link = document.createElement('a');
-                const ilce = pdfData?.ilceAdi || excelData?.ilceAdi || 'Rapor';
-                // replace spaces for filename
-                const cleanName = ilce.replace(/\\s+/g, '_');
-                link.download = `${cleanName}_Analizi.png`;
-                link.href = canvas.toDataURL('image/png');
-                link.click();
-            } catch (err) {
-                console.error("Resim indirme hatası:", err);
-                alert("Resim indirilirken bir hata oluştu: " + err.message);
-            } finally {
-                btn.innerHTML = originalHtml;
-                btn.disabled = false;
+            // Grafikleri aç ve renderla
+            const chartContainerIds = ['pdfChartContainer', 'excelChartContainer', 'combinedExcelChartContainer', 'combinedPdfChartContainer'];
+            const previouslyHidden = [];
+            chartContainerIds.forEach(id => {
+                const el = document.getElementById(id);
+                if (el && (el.classList.contains('hidden') || el.style.display === 'none')) {
+                    previouslyHidden.push(id);
+                    el.classList.remove('hidden');
+                    el.style.display = 'block';
+                }
+            });
+
+            // Animasyonu kapat (resim çekerken yarım çizilmiş pasta olmaması için)
+            const prevAnimation = Chart.defaults.animation;
+            Chart.defaults.animation = false;
+
+            if (pdfData) {
+                if (document.getElementById('pdfChart')) renderPDFChart(pdfData);
+                if (document.getElementById('combinedPdfChart')) renderPDFChart(pdfData, 'combinedPdfChart', 'combinedPdf');
             }
+            if (excelData) {
+                if (document.getElementById('excelChart')) renderExcelChart(excelData);
+                if (document.getElementById('combinedExcelChart')) renderExcelChart(excelData, 'combinedExcelChart', 'combinedExcel');
+            }
+
+            // Grafiklerin çizilmesi için kisa bekle ve HTML üret (animasyon kapali oldugu icin hizlidir)
+            setTimeout(() => {
+                Chart.defaults.animation = prevAnimation;
+                try {
+                    const clone = resultDiv.cloneNode(true);
+                    clone.style.display = 'block';
+
+                    const originalCanvases = Array.from(resultDiv.getElementsByTagName('canvas'));
+                    const clonedCanvases = Array.from(clone.getElementsByTagName('canvas'));
+
+                    // Canvasları resme dönüştür
+                    for (let i = 0; i < originalCanvases.length; i++) {
+                        const img = document.createElement('img');
+                        img.src = originalCanvases[i].toDataURL('image/png');
+                        img.style.width = '100%';
+                        img.style.maxHeight = '100%';
+                        img.style.objectFit = 'contain'; img.style.height = '100%';
+                        img.style.margin = '0 auto';
+                        img.style.display = 'block';
+                        clonedCanvases[i].parentNode.replaceChild(img, clonedCanvases[i]);
+                    }
+
+                    // Grafikleri geri gizle
+                    previouslyHidden.forEach(id => {
+                        const el = document.getElementById(id);
+                        if (el) {
+                            el.classList.add('hidden');
+                            el.style.display = 'none';
+                        }
+                    });
+
+                    // Tüm stilleri topla
+                    const styleElements = document.querySelectorAll('style');
+                    let customStyles = '';
+                    styleElements.forEach(el => { customStyles += el.innerHTML + '\n'; });
+                    const isDark = document.documentElement.classList.contains('dark');
+                    const ilce = pdfData?.ilceAdi || excelData?.ilceAdi || 'Rapor';
+
+                    // HTML şablonu oluştur
+                    const htmlContent = `<!DOCTYPE html>
+<html lang="tr" class="${isDark ? 'dark' : ''}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${ilce} Analiz Raporu</title>
+    <script src="https://cdn.tailwindcss.com"><\/script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet" />
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: { extend: { colors: { gray: { 850: '#1f2937' } } } }
+        }
+    <\/script>
+    <style>
+        ${customStyles}
+        body { padding: 20px; text-align: left; }
+        .chart-toggle-icon { display: none; }
+        .chart-toggle { pointer-events: none; cursor: default; }
+    </style>
+</head>
+<body class="bg-[#f8fafc] dark:bg-[#10131a] text-slate-800 dark:text-[#e1e2ec]" style="background-image: radial-gradient(at 0% 0%, rgba(76, 175, 80, 0.05) 0px, transparent 50%), radial-gradient(at 100% 0%, rgba(255, 152, 0, 0.05) 0px, transparent 50%); min-height: 100vh;">
+    <div style="max-width: 900px; margin: 0 auto;">
+        ${clone.innerHTML}
+    </div>
+</body>
+</html>`;
+
+                    const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.download = `${ilce.replace(/\s+/g, '_')}_Analizi.html`;
+                    link.href = url;
+                    link.click();
+                    URL.revokeObjectURL(url);
+                } catch (err) {
+                    console.error("Dışa aktarma hatası:", err);
+                    alert("HTML oluşturulurken bir hata oluştu.");
+                } finally {
+                    btn.innerHTML = originalHtml;
+                    btn.disabled = false;
+                    closeShareModal();
+                }
+            }, 500);
         }
 
         function startNewAnalysis() { window.location.href = window.location.origin + window.location.pathname; }
@@ -1204,7 +1281,7 @@
             if (!isShared) {
                 result.innerHTML = `<div class="glass-card rounded-3xl p-8 text-center relative overflow-hidden animate-slide-up"><div class="absolute -right-20 -top-20 w-64 h-64 bg-gradient-to-br from-green-400/20 to-blue-400/20 rounded-full blur-3xl"></div><div class="relative z-10"><div class="text-3xl font-black mb-2">🏛️ ${data.ilceAdi}</div><div class="text-slate-500 dark:text-[#c2c6d6]">Mahalle Bazlı Yapı Analizi • ${data.neighborhoods ? data.neighborhoods.length + ' Mahalle' : 'Özet Rapor'}</div></div></div>`;
             }
-            result.innerHTML += `<div class="glass-card rounded-3xl p-6 animate-slide-up"><div class="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/10 border-2 border-[#4CAF50] dark:border-[#4ae176] rounded-3xl p-8 text-center mb-6"><div class="text-sm font-bold uppercase tracking-wider text-slate-600 dark:text-[#c2c6d6] mb-3">Toplam Yapı Sayısı</div><div class="text-6xl font-black text-slate-800 dark:text-white mb-4">${data.genelToplam.toplam.toLocaleString('tr-TR')}</div><div class="grid grid-cols-3 gap-4"><div class="bg-white/50 dark:bg-white/10 rounded-2xl p-3"><div class="text-xs font-bold text-slate-500 dark:text-[#c2c6d6] uppercase">Mesken</div><div class="text-xl font-bold text-slate-800 dark:text-white">${data.genelToplam.mesken.toLocaleString('tr-TR')}</div></div><div class="bg-white/50 dark:bg-white/10 rounded-2xl p-3"><div class="text-xs font-bold text-slate-500 dark:text-[#c2c6d6] uppercase">Kamu</div><div class="text-xl font-bold text-slate-800 dark:text-white">${data.genelToplam.kamu.toLocaleString('tr-TR')}</div></div><div class="bg-white/50 dark:bg-white/10 rounded-2xl p-3"><div class="text-xs font-bold text-slate-500 dark:text-[#c2c6d6] uppercase">İşyeri</div><div class="text-xl font-bold text-slate-800 dark:text-white">${data.genelToplam.isyeri.toLocaleString('tr-TR')}</div></div></div></div><div class="chart-wrapper mb-6"><div class="chart-toggle glass-card rounded-2xl p-4 cursor-pointer hover:scale-[0.99] transition-all flex items-center justify-between" onclick="toggleChart('excelChartContainer')"><div class="flex items-center gap-3 font-semibold"><span class="material-symbols-outlined text-[#4CAF50] dark:text-[#4ae176]">pie_chart</span>Yapı Tipi Dağılımını Göster/Gizle</div><div class="chart-toggle-icon text-xl transition-transform" id="excelChartContainerIcon">▼</div></div><div class="chart-container rounded-3xl mt-3 h-[400px] hidden" id="excelChartContainer"><canvas id="excelChart"></canvas></div></div><div class="flex items-center gap-2 text-lg font-bold mb-4"><span class="material-symbols-outlined">list</span>Tüm Mahalleler</div><div class="table-container rounded-3xl overflow-hidden max-h-[500px] overflow-y-auto">${data.neighborhoods ? `<table class="w-full"><thead><tr><th class="p-4 text-left font-semibold text-sm sticky top-0 z-10">Mahalle</th><th class="p-4 text-left font-semibold text-sm sticky top-0 z-10">Mesken</th><th class="p-4 text-left font-semibold text-sm sticky top-0 z-10">Kamu</th><th class="p-4 text-left font-semibold text-sm sticky top-0 z-10">İşyeri</th><th class="p-4 text-left font-semibold text-sm sticky top-0 z-10">Toplam</th></tr></thead><tbody>${data.neighborhoods.map(n => `<tr><td class="p-4"><strong>${n.name}</strong></td><td class="p-4"><span class="inline-block px-3 py-1 rounded-full text-xs font-bold bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">${n.mesken.toLocaleString('tr-TR')}</span></td><td class="p-4"><span class="inline-block px-3 py-1 rounded-full text-xs font-bold bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400">${n.kamu.toLocaleString('tr-TR')}</span></td><td class="p-4"><span class="inline-block px-3 py-1 rounded-full text-xs font-bold bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400">${n.isyeri.toLocaleString('tr-TR')}</span></td><td class="p-4"><strong>${n.toplam.toLocaleString('tr-TR')}</strong></td></tr>`).join('')}</tbody></table>` : `<div class="p-4 text-center text-slate-500">Mahalle detayları bağlantı karakter sınırı nedeniyle özet raporda gösterilememektedir.</div>`}</div></div>`;
+            result.innerHTML += `<div class="glass-card rounded-3xl p-6 animate-slide-up"><div class="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/10 border-2 border-[#4CAF50] dark:border-[#4ae176] rounded-3xl p-8 text-center mb-6"><div class="text-sm font-bold uppercase tracking-wider text-slate-600 dark:text-[#c2c6d6] mb-3">Toplam Yapı Sayısı</div><div class="text-6xl font-black text-slate-800 dark:text-white mb-4">${data.genelToplam.toplam.toLocaleString('tr-TR')}</div><div class="grid grid-cols-3 gap-4"><div class="bg-white/50 dark:bg-white/10 rounded-2xl p-3 text-center" style="min-height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center"><div class="text-xs font-bold text-slate-500 dark:text-[#c2c6d6] uppercase">Mesken</div><div class="text-xl font-bold text-slate-800 dark:text-white">${data.genelToplam.mesken.toLocaleString('tr-TR')}</div></div><div class="bg-white/50 dark:bg-white/10 rounded-2xl p-3 text-center" style="min-height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center"><div class="text-xs font-bold text-slate-500 dark:text-[#c2c6d6] uppercase">Kamu</div><div class="text-xl font-bold text-slate-800 dark:text-white">${data.genelToplam.kamu.toLocaleString('tr-TR')}</div></div><div class="bg-white/50 dark:bg-white/10 rounded-2xl p-3 text-center" style="min-height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center"><div class="text-xs font-bold text-slate-500 dark:text-[#c2c6d6] uppercase">İşyeri</div><div class="text-xl font-bold text-slate-800 dark:text-white">${data.genelToplam.isyeri.toLocaleString('tr-TR')}</div></div></div></div><div class="chart-wrapper mb-6"><div class="chart-toggle glass-card rounded-2xl p-4 cursor-pointer hover:scale-[0.99] transition-all flex items-center justify-between" onclick="toggleChart('excelChartContainer')"><div class="flex items-center gap-3 font-semibold"><span class="material-symbols-outlined text-[#4CAF50] dark:text-[#4ae176]">pie_chart</span>Yapı Tipi Dağılımını Göster/Gizle</div><div class="chart-toggle-icon text-xl transition-transform" id="excelChartContainerIcon">▼</div></div><div class="chart-container rounded-3xl mt-3 h-[400px] hidden" id="excelChartContainer"><canvas id="excelChart"></canvas></div></div><div class="flex items-center gap-2 text-lg font-bold mb-4"><span class="material-symbols-outlined">list</span>Tüm Mahalleler</div><div class="table-container rounded-3xl overflow-hidden max-h-[500px] overflow-y-auto">${data.neighborhoods ? `<table class="w-full"><thead><tr><th class="p-4 text-left font-semibold text-sm sticky top-0 z-10">Mahalle</th><th class="p-4 text-left font-semibold text-sm sticky top-0 z-10">Mesken</th><th class="p-4 text-left font-semibold text-sm sticky top-0 z-10">Kamu</th><th class="p-4 text-left font-semibold text-sm sticky top-0 z-10">İşyeri</th><th class="p-4 text-left font-semibold text-sm sticky top-0 z-10">Toplam</th></tr></thead><tbody>${data.neighborhoods.map(n => `<tr><td class="p-4"><strong>${n.name}</strong></td><td class="p-4"><span class="inline-block px-3 py-1 rounded-full text-xs font-bold bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">${n.mesken.toLocaleString('tr-TR')}</span></td><td class="p-4"><span class="inline-block px-3 py-1 rounded-full text-xs font-bold bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400">${n.kamu.toLocaleString('tr-TR')}</span></td><td class="p-4"><span class="inline-block px-3 py-1 rounded-full text-xs font-bold bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400">${n.isyeri.toLocaleString('tr-TR')}</span></td><td class="p-4"><strong>${n.toplam.toLocaleString('tr-TR')}</strong></td></tr>`).join('')}</tbody></table>` : `<div class="p-4 text-center text-slate-500">Mahalle detayları bağlantı karakter sınırı nedeniyle özet raporda gösterilememektedir.</div>`}</div></div>`;
             result.classList.remove('hidden');
 
         }
@@ -1221,7 +1298,7 @@
         function renderCombinedReportContent() {
             const result = document.getElementById('result');
             const existingContent = result.innerHTML;
-            result.innerHTML = existingContent + `<div class="glass-card rounded-3xl p-6 animate-slide-up"><div class="flex items-center gap-3 text-xl font-bold mb-6 pb-4 border-b-2 border-[#4CAF50] dark:border-[#4ae176]"><span class="material-symbols-outlined">apartment</span>Yapı Bilgileri</div><div class="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/10 border-2 border-[#4CAF50] dark:border-[#4ae176] rounded-3xl p-8 text-center mb-6"><div class="text-sm font-bold uppercase tracking-wider text-slate-600 dark:text-[#c2c6d6] mb-3">Toplam Yapı Sayısı</div><div class="text-6xl font-black text-slate-800 dark:text-white mb-4">${excelData.genelToplam.toplam.toLocaleString('tr-TR')}</div><div class="grid grid-cols-3 gap-4"><div class="bg-white/50 dark:bg-white/10 rounded-2xl p-3"><div class="text-xs font-bold text-slate-500 dark:text-[#c2c6d6] uppercase">Mesken</div><div class="text-xl font-bold text-slate-800 dark:text-white">${excelData.genelToplam.mesken.toLocaleString('tr-TR')}</div></div><div class="bg-white/50 dark:bg-white/10 rounded-2xl p-3"><div class="text-xs font-bold text-slate-500 dark:text-[#c2c6d6] uppercase">Kamu</div><div class="text-xl font-bold text-slate-800 dark:text-white">${excelData.genelToplam.kamu.toLocaleString('tr-TR')}</div></div><div class="bg-white/50 dark:bg-white/10 rounded-2xl p-3"><div class="text-xs font-bold text-slate-500 dark:text-[#c2c6d6] uppercase">İşyeri</div><div class="text-xl font-bold text-slate-800 dark:text-white">${excelData.genelToplam.isyeri.toLocaleString('tr-TR')}</div></div></div></div><div class="chart-wrapper mb-8"><div class="chart-toggle glass-card rounded-2xl p-4 cursor-pointer hover:scale-[0.99] transition-all flex items-center justify-between" onclick="toggleChart('combinedExcelChartContainer')"><div class="flex items-center gap-3 font-semibold"><span class="material-symbols-outlined text-[#4CAF50] dark:text-[#4ae176]">pie_chart</span>Yapı Tipi Dağılımını Göster/Gizle</div><div class="chart-toggle-icon text-xl transition-transform" id="combinedExcelChartContainerIcon">▼</div></div><div class="chart-container rounded-3xl mt-3 h-[400px] hidden" id="combinedExcelChartContainer"><canvas id="combinedExcelChart"></canvas></div></div></div><div class="glass-card rounded-3xl p-6 animate-slide-up"><div class="flex items-center gap-3 text-xl font-bold mb-6 pb-4 border-b-2 border-blue-500 dark:border-blue-400"><span class="material-symbols-outlined">description</span>Bağımsız Bölüm Bilgileri</div><div class="space-y-4 mb-6"><div class="bg-gradient-to-br from-[#2196F3] to-[#1976D2] border-3 border-[#0D47A1] dark:border-[#64B5F6] rounded-3xl p-6 text-center text-white shadow-lg shadow-blue-500/30"><div class="text-sm font-bold uppercase tracking-wider mb-3 opacity-95">Toplam Mesken (Bölüm)</div><div class="text-5xl font-black text-white mb-4 drop-shadow-md">${pdfData.meskenToplam.toLocaleString('tr-TR')}</div><div class="grid grid-cols-2 md:grid-cols-4 gap-3"><div class="bg-white/50 dark:bg-white/10 rounded-2xl p-3"><div class="text-xs font-bold text-white/80 uppercase">İkamet Amaçlı</div><div class="text-lg font-bold text-white">${pdfData.ikamet_amacli.toLocaleString('tr-TR')}</div></div><div class="bg-white/50 dark:bg-white/10 rounded-2xl p-3"><div class="text-xs font-bold text-white/80 uppercase">İkamet Harici</div><div class="text-lg font-bold text-white">${pdfData.ikamet_harici.toLocaleString('tr-TR')}</div></div><div class="bg-white/50 dark:bg-white/10 rounded-2xl p-3"><div class="text-xs font-bold text-white/80 uppercase">Kapıcı Dairesi</div><div class="text-lg font-bold text-white">${pdfData.kapici.toLocaleString('tr-TR')}</div></div><div class="bg-white/50 dark:bg-white/10 rounded-2xl p-3"><div class="text-xs font-bold text-white/80 uppercase">Mesken</div><div class="text-lg font-bold text-white">${pdfData.mesken.toLocaleString('tr-TR')}</div></div></div></div><div class="bg-gradient-to-br from-[#ff5722] to-[#ff9800] border-3 border-[#e55100] dark:border-[#ffb95f] rounded-3xl p-6 text-center text-white shadow-lg shadow-orange-500/40"><div class="text-sm font-bold uppercase tracking-wider mb-2 opacity-95">Toplam İşyeri (Bölüm)</div><div class="text-4xl font-black text-white drop-shadow-md">${pdfData.isyeri.toLocaleString('tr-TR')}</div></div><div class="bg-gradient-to-br from-[#9C27B0] to-[#E91E63] border-3 border-[#7B1FA2] dark:border-[#CE93D8] rounded-3xl p-6 text-center text-white shadow-lg shadow-purple-500/30"><div class="text-sm font-bold uppercase tracking-wider mb-2 opacity-95">Genel Toplam Bağımsız Bölüm</div><div class="text-5xl font-black text-white drop-shadow-lg">${pdfData.toplam.toLocaleString('tr-TR')}</div></div></div><div class="chart-wrapper mb-6"><div class="chart-toggle glass-card rounded-2xl p-4 cursor-pointer hover:scale-[0.99] transition-all flex items-center justify-between" onclick="toggleChart('combinedPdfChartContainer')"><div class="flex items-center gap-3 font-semibold"><span class="material-symbols-outlined text-[#4CAF50] dark:text-[#4ae176]">pie_chart</span>Bağımsız Bölüm Dağılımını Göster/Gizle</div><div class="chart-toggle-icon text-xl transition-transform" id="combinedPdfChartContainerIcon">▼</div></div><div class="chart-container rounded-3xl mt-3 h-[400px] hidden" id="combinedPdfChartContainer"><canvas id="combinedPdfChart"></canvas></div></div></div><div class="glass-card rounded-3xl p-6 animate-slide-up"><div class="flex items-center gap-3 text-xl font-bold mb-4"><span class="material-symbols-outlined">list</span>Mahalle Bazlı Yapı Detayları</div><div class="table-container rounded-3xl overflow-hidden max-h-[500px] overflow-y-auto">${excelData.neighborhoods ? `<table class="w-full"><thead><tr><th class="p-4 text-left font-semibold text-sm sticky top-0 z-10">Mahalle</th><th class="p-4 text-left font-semibold text-sm sticky top-0 z-10">Mesken</th><th class="p-4 text-left font-semibold text-sm sticky top-0 z-10">Kamu</th><th class="p-4 text-left font-semibold text-sm sticky top-0 z-10">İşyeri</th><th class="p-4 text-left font-semibold text-sm sticky top-0 z-10">Toplam</th></tr></thead><tbody>${excelData.neighborhoods.map(n => `<tr><td class="p-4"><strong>${n.name}</strong></td><td class="p-4"><span class="inline-block px-3 py-1 rounded-full text-xs font-bold bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">${n.mesken.toLocaleString('tr-TR')}</span></td><td class="p-4"><span class="inline-block px-3 py-1 rounded-full text-xs font-bold bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400">${n.kamu.toLocaleString('tr-TR')}</span></td><td class="p-4"><span class="inline-block px-3 py-1 rounded-full text-xs font-bold bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400">${n.isyeri.toLocaleString('tr-TR')}</span></td><td class="p-4"><strong>${n.toplam.toLocaleString('tr-TR')}</strong></td></tr>`).join('')}</tbody></table>` : `<div class="p-4 text-center text-slate-500">Mahalle detayları bağlantı karakter sınırı nedeniyle özet raporda gösterilememektedir.</div>`}</div></div>`;
+            result.innerHTML = existingContent + `<div class="glass-card rounded-3xl p-6 animate-slide-up"><div class="flex items-center gap-3 text-xl font-bold mb-6 pb-4 border-b-2 border-[#4CAF50] dark:border-[#4ae176]"><span class="material-symbols-outlined">apartment</span>Yapı Bilgileri</div><div class="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/10 border-2 border-[#4CAF50] dark:border-[#4ae176] rounded-3xl p-8 text-center mb-6"><div class="text-sm font-bold uppercase tracking-wider text-slate-600 dark:text-[#c2c6d6] mb-3">Toplam Yapı Sayısı</div><div class="text-6xl font-black text-slate-800 dark:text-white mb-4">${excelData.genelToplam.toplam.toLocaleString('tr-TR')}</div><div class="grid grid-cols-3 gap-4"><div class="bg-white/50 dark:bg-white/10 rounded-2xl p-3 text-center" style="min-height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center"><div class="text-xs font-bold text-slate-500 dark:text-[#c2c6d6] uppercase">Mesken</div><div class="text-xl font-bold text-slate-800 dark:text-white">${excelData.genelToplam.mesken.toLocaleString('tr-TR')}</div></div><div class="bg-white/50 dark:bg-white/10 rounded-2xl p-3 text-center" style="min-height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center"><div class="text-xs font-bold text-slate-500 dark:text-[#c2c6d6] uppercase">Kamu</div><div class="text-xl font-bold text-slate-800 dark:text-white">${excelData.genelToplam.kamu.toLocaleString('tr-TR')}</div></div><div class="bg-white/50 dark:bg-white/10 rounded-2xl p-3 text-center" style="min-height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center"><div class="text-xs font-bold text-slate-500 dark:text-[#c2c6d6] uppercase">İşyeri</div><div class="text-xl font-bold text-slate-800 dark:text-white">${excelData.genelToplam.isyeri.toLocaleString('tr-TR')}</div></div></div></div><div class="chart-wrapper mb-8"><div class="chart-toggle glass-card rounded-2xl p-4 cursor-pointer hover:scale-[0.99] transition-all flex items-center justify-between" onclick="toggleChart('combinedExcelChartContainer')"><div class="flex items-center gap-3 font-semibold"><span class="material-symbols-outlined text-[#4CAF50] dark:text-[#4ae176]">pie_chart</span>Yapı Tipi Dağılımını Göster/Gizle</div><div class="chart-toggle-icon text-xl transition-transform" id="combinedExcelChartContainerIcon">▼</div></div><div class="chart-container rounded-3xl mt-3 h-[400px] hidden" style="display:none" id="combinedExcelChartContainer"><canvas id="combinedExcelChart"></canvas></div></div></div><div class="glass-card rounded-3xl p-6 animate-slide-up"><div class="flex items-center gap-3 text-xl font-bold mb-6 pb-4 border-b-2 border-blue-500 dark:border-blue-400"><span class="material-symbols-outlined">description</span>Bağımsız Bölüm Bilgileri</div><div class="space-y-4 mb-6"><div class="bg-gradient-to-br from-[#2196F3] to-[#1976D2] border-3 border-[#0D47A1] dark:border-[#64B5F6] rounded-3xl p-6 text-center text-white shadow-lg shadow-blue-500/30"><div class="text-sm font-bold uppercase tracking-wider mb-3 opacity-95">Toplam Mesken (Bölüm)</div><div class="text-5xl font-black text-white mb-4 drop-shadow-md">${pdfData.meskenToplam.toLocaleString('tr-TR')}</div><div class="grid grid-cols-2 md:grid-cols-4 gap-3"><div class="bg-white/50 dark:bg-white/10 rounded-2xl p-3 text-center" style="min-height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center"><div class="text-xs font-bold text-white/80 uppercase">İkamet Amaçlı</div><div class="text-lg font-bold text-white">${pdfData.ikamet_amacli.toLocaleString('tr-TR')}</div></div><div class="bg-white/50 dark:bg-white/10 rounded-2xl p-3 text-center" style="min-height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center"><div class="text-xs font-bold text-white/80 uppercase">İkamet Harici</div><div class="text-lg font-bold text-white">${pdfData.ikamet_harici.toLocaleString('tr-TR')}</div></div><div class="bg-white/50 dark:bg-white/10 rounded-2xl p-3 text-center" style="min-height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center"><div class="text-xs font-bold text-white/80 uppercase">Kapıcı Dairesi</div><div class="text-lg font-bold text-white">${pdfData.kapici.toLocaleString('tr-TR')}</div></div><div class="bg-white/50 dark:bg-white/10 rounded-2xl p-3 text-center" style="min-height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center"><div class="text-xs font-bold text-white/80 uppercase">Mesken</div><div class="text-lg font-bold text-white">${pdfData.mesken.toLocaleString('tr-TR')}</div></div></div></div><div class="bg-gradient-to-br from-[#ff5722] to-[#ff9800] border-3 border-[#e55100] dark:border-[#ffb95f] rounded-3xl p-6 text-center text-white shadow-lg shadow-orange-500/40"><div class="text-sm font-bold uppercase tracking-wider mb-2 opacity-95">Toplam İşyeri (Bölüm)</div><div class="text-4xl font-black text-white drop-shadow-md">${pdfData.isyeri.toLocaleString('tr-TR')}</div></div><div class="bg-gradient-to-br from-[#9C27B0] to-[#E91E63] border-3 border-[#7B1FA2] dark:border-[#CE93D8] rounded-3xl p-6 text-center text-white shadow-lg shadow-purple-500/30"><div class="text-sm font-bold uppercase tracking-wider mb-2 opacity-95">Genel Toplam Bağımsız Bölüm</div><div class="text-5xl font-black text-white drop-shadow-lg">${pdfData.toplam.toLocaleString('tr-TR')}</div></div></div><div class="chart-wrapper mb-6"><div class="chart-toggle glass-card rounded-2xl p-4 cursor-pointer hover:scale-[0.99] transition-all flex items-center justify-between" onclick="toggleChart('combinedPdfChartContainer')"><div class="flex items-center gap-3 font-semibold"><span class="material-symbols-outlined text-[#4CAF50] dark:text-[#4ae176]">pie_chart</span>Bağımsız Bölüm Dağılımını Göster/Gizle</div><div class="chart-toggle-icon text-xl transition-transform" id="combinedPdfChartContainerIcon">▼</div></div><div class="chart-container rounded-3xl mt-3 h-[400px] hidden" style="display:none" id="combinedPdfChartContainer"><canvas id="combinedPdfChart"></canvas></div></div></div><div class="glass-card rounded-3xl p-6 animate-slide-up"><div class="flex items-center gap-3 text-xl font-bold mb-4"><span class="material-symbols-outlined">list</span>Mahalle Bazlı Yapı Detayları</div><div class="table-container rounded-3xl overflow-hidden max-h-[500px] overflow-y-auto">${excelData.neighborhoods ? `<table class="w-full"><thead><tr><th class="p-4 text-left font-semibold text-sm sticky top-0 z-10">Mahalle</th><th class="p-4 text-left font-semibold text-sm sticky top-0 z-10">Mesken</th><th class="p-4 text-left font-semibold text-sm sticky top-0 z-10">Kamu</th><th class="p-4 text-left font-semibold text-sm sticky top-0 z-10">İşyeri</th><th class="p-4 text-left font-semibold text-sm sticky top-0 z-10">Toplam</th></tr></thead><tbody>${excelData.neighborhoods.map(n => `<tr><td class="p-4"><strong>${n.name}</strong></td><td class="p-4"><span class="inline-block px-3 py-1 rounded-full text-xs font-bold bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">${n.mesken.toLocaleString('tr-TR')}</span></td><td class="p-4"><span class="inline-block px-3 py-1 rounded-full text-xs font-bold bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400">${n.kamu.toLocaleString('tr-TR')}</span></td><td class="p-4"><span class="inline-block px-3 py-1 rounded-full text-xs font-bold bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400">${n.isyeri.toLocaleString('tr-TR')}</span></td><td class="p-4"><strong>${n.toplam.toLocaleString('tr-TR')}</strong></td></tr>`).join('')}</tbody></table>` : `<div class="p-4 text-center text-slate-500">Mahalle detayları bağlantı karakter sınırı nedeniyle özet raporda gösterilememektedir.</div>`}</div></div>`;
 
 
         }
@@ -1248,3 +1325,4 @@
 </body>
 
 </html>
+
