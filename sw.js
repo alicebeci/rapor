@@ -1,4 +1,4 @@
-const CACHE_NAME = 'adres-raporu-v3';
+const CACHE_NAME = 'adres-raporu-v4';
 
 // Uygulama açılışında anında önbelleğe alınacak kritik dosyalar (Ağ olmasa dahi anında yüklenir)
 // Analiz için gerekli gizli worker ve harici kütüphaneler de listeye eklendi (İlk yüklemede çekilir)
@@ -12,6 +12,8 @@ const INITIAL_CACHED_RESOURCES = [
   'https://cdn.tailwindcss.com?plugins=forms,container-queries',
   'https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js',
   'https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js',
+  'https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js',
+  'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js',
   'https://upload.wikimedia.org/wikipedia/commons/8/87/PDF_file_icon.svg',
   'https://api.iconify.design/vscode-icons/file-type-excel.svg'
 ];
