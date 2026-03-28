@@ -489,6 +489,26 @@
             * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         }
     </style>
+    <script>
+        function toggleChart(chartId) {
+            const container = document.getElementById(chartId);
+            const icon = document.getElementById(chartId + 'Icon');
+            const webLayout = container.closest('.web-layout');
+            if (container) {
+                if (!container.classList.contains('hidden') && container.style.display !== 'none') {
+                    container.classList.add('hidden');
+                    container.style.display = 'none';
+                    if (icon) icon.textContent = '▼';
+                    if (webLayout) webLayout.classList.remove('has-chart');
+                } else {
+                    container.classList.remove('hidden');
+                    container.style.display = 'block';
+                    if (icon) icon.textContent = '▲';
+                    if (webLayout) webLayout.classList.add('has-chart');
+                }
+            }
+        }
+    </script>
 </head>
 
 <body class="text-slate-800 dark:text-[#e1e2ec] pb-8">
@@ -1220,9 +1240,28 @@
     <style>
         ${customStyles}
         body { padding: 20px; text-align: left; }
-        .chart-toggle-icon { display: none; }
-        .chart-toggle { pointer-events: none; cursor: default; }
+
     </style>
+    <script>
+        function toggleChart(chartId) {
+            const container = document.getElementById(chartId);
+            const icon = document.getElementById(chartId + 'Icon');
+            const webLayout = container.closest('.web-layout');
+            if (container) {
+                if (!container.classList.contains('hidden') && container.style.display !== 'none') {
+                    container.classList.add('hidden');
+                    container.style.display = 'none';
+                    if (icon) icon.textContent = '▼';
+                    if (webLayout) webLayout.classList.remove('has-chart');
+                } else {
+                    container.classList.remove('hidden');
+                    container.style.display = 'block';
+                    if (icon) icon.textContent = '▲';
+                    if (webLayout) webLayout.classList.add('has-chart');
+                }
+            }
+        }
+    <\/script>
 </head>
 <body class="bg-[#f8fafc] dark:bg-[#10131a] text-slate-800 dark:text-[#e1e2ec]" style="background-image: radial-gradient(at 0% 0%, rgba(76, 175, 80, 0.05) 0px, transparent 50%), radial-gradient(at 100% 0%, rgba(255, 152, 0, 0.05) 0px, transparent 50%); min-height: 100vh;">
     <div style="max-width: 900px; margin: 0 auto;">
