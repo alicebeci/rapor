@@ -1,4 +1,4 @@
-const CACHE_NAME = 'adres-raporu-v10';
+const CACHE_NAME = 'adres-raporu-v13';
 
 // Uygulama açılışında anında önbelleğe alınacak kritik dosyalar (Ağ olmasa dahi anında yüklenir)
 // Analiz için gerekli gizli worker ve harici kütüphaneler de listeye eklendi (İlk yüklemede çekilir)
