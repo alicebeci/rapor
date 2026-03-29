@@ -111,6 +111,7 @@
             -webkit-backdrop-filter: blur(24px);
             border: 1px solid rgba(255, 255, 255, 0.5);
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.02);
+            overflow-x: auto;
         }
 
         html.dark .glass-card {
@@ -119,6 +120,7 @@
             -webkit-backdrop-filter: blur(24px);
             border: 1px solid rgba(255, 255, 255, 0.05);
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+            overflow-x: auto;
         }
 
         html:not(.dark) .app-header {
@@ -271,6 +273,11 @@
 
         html:not(.dark) .table-container {
             background: rgba(255, 255, 255, 0.9);
+            overflow-x: auto;
+        }
+
+        html.dark .table-container {
+            overflow-x: auto;
         }
 
         html:not(.dark) th {
@@ -489,26 +496,6 @@
             * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         }
     </style>
-    <script>
-        function toggleChart(chartId) {
-            const container = document.getElementById(chartId);
-            const icon = document.getElementById(chartId + 'Icon');
-            const webLayout = container.closest('.web-layout');
-            if (container) {
-                if (!container.classList.contains('hidden') && container.style.display !== 'none') {
-                    container.classList.add('hidden');
-                    container.style.display = 'none';
-                    if (icon) icon.textContent = '▼';
-                    if (webLayout) webLayout.classList.remove('has-chart');
-                } else {
-                    container.classList.remove('hidden');
-                    container.style.display = 'block';
-                    if (icon) icon.textContent = '▲';
-                    if (webLayout) webLayout.classList.add('has-chart');
-                }
-            }
-        }
-    </script>
 </head>
 
 <body class="text-slate-800 dark:text-[#e1e2ec] pb-8">
@@ -1081,7 +1068,7 @@
             const safeData = getSafeData([data.genelToplam.mesken, data.genelToplam.kamu, data.genelToplam.isyeri], t);
             charts[key] = new Chart(ctx, {
                 type: 'doughnut',
-                data: { labels: [`Mesken (${data.genelToplam.mesken.toLocaleString('tr-TR')}) %${pct(data.genelToplam.mesken, t)}`, `Kamu (${data.genelToplam.kamu.toLocaleString('tr-TR')}) %${pct(data.genelToplam.kamu, t)}`, `İşyeri (${data.genelToplam.isyeri.toLocaleString('tr-TR')}) %${pct(data.genelToplam.isyeri, t)}`], datasets: [{ data: safeData, backgroundColor: ['#4CAF50', '#2196F3', '#FF9800'], borderWidth: 2, borderColor: isDark ? '#1d2027' : '#ffffff' }] },
+                data: { labels: [`Mesken (${data.genelToplam.mesken.toLocaleString('tr-TR')}) %${pct(data.genelToplam.mesken, t)}`, `Kamu (${data.genelToplam.kamu.toLocaleString('tr-TR')}) %${pct(data.genelToplam.kamu, t)}`, `İşyeri (${data.genelToplam.isyeri.toLocaleString('tr-TR')}) %${pct(data.genelToplam.isyeri, t)}`], datasets: [{ data: safeData, backgroundColor: ['#4CAF50', '#2196F3', '#FF9800'], borderWidth: 0 }] },
                 options: { responsive: true, maintainAspectRatio: false, plugins: { tooltip: customTooltip, legend: { position: 'bottom', labels: { padding: 20, usePointStyle: true, font: { size: key.startsWith('combined') ? 11 : 12 }, color: isDark ? '#c2c6d6' : '#475569' } } } }
             });
         }
@@ -1190,21 +1177,8 @@
                     const clone = resultDiv.cloneNode(true);
                     clone.style.display = 'block';
 
-                    const originalCanvases = Array.from(resultDiv.getElementsByTagName('canvas'));
-                    const clonedCanvases = Array.from(clone.getElementsByTagName('canvas'));
-
-                    // Canvasları resme dönüştür
-                    for (let i = 0; i < originalCanvases.length; i++) {
-                        const img = document.createElement('img');
-                        img.src = originalCanvases[i].toDataURL('image/png');
-                        img.style.width = '100%';
-                        img.style.maxHeight = '100%';
-                        img.style.objectFit = 'contain'; img.style.height = '100%';
-                        img.style.margin = '0 auto';
-                        img.style.display = 'block';
-                        clonedCanvases[i].parentNode.replaceChild(img, clonedCanvases[i]);
-                    }
-
+                    // Canvasları oldugu gibi koru (resme dönüsturme!)
+                    
                     // Grafikleri geri gizle
                     previouslyHidden.forEach(id => {
                         const el = document.getElementById(id);
@@ -1220,6 +1194,10 @@
                     styleElements.forEach(el => { customStyles += el.innerHTML + '\n'; });
                     const isDark = document.documentElement.classList.contains('dark');
                     const ilce = pdfData?.ilceAdi || excelData?.ilceAdi || 'Rapor';
+                    
+                    // Verileri JSON olarak gom
+                    const pdfDataJson = pdfData ? JSON.stringify(pdfData) : 'null';
+                    const excelDataJson = excelData ? JSON.stringify(excelData) : 'null';
 
                     // HTML şablonu oluştur
                     const htmlContent = `<!DOCTYPE html>
@@ -1231,37 +1209,94 @@
     <script src="https://cdn.tailwindcss.com"><\/script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"><\/script>
     <script>
         tailwind.config = {
             darkMode: 'class',
             theme: { extend: { colors: { gray: { 850: '#1f2937' } } } }
         }
     <\/script>
-    <style>
-        ${customStyles}
-        body { padding: 20px; text-align: left; }
-
-    </style>
     <script>
+        let charts = {};
+        
+        function pct(val, total) { if(total===0)return'0'; const p=(val/total)*100; if(p===0)return'0'; if(p<1)return p.toFixed(2); return p.toFixed(1); }
+        
+        function getSafeData(arr, total) {
+            const minAllowed = total * 0.01;
+            return arr.map(v => (v > 0 && v < minAllowed) ? minAllowed : v);
+        }
+
+        function renderPDFChart(data, canvasId, key) {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            if (charts[key]) charts[key].destroy();
+            const isDark = document.documentElement.classList.contains('dark');
+            const t = data.meskenToplam + data.isyeri;
+            const safeData = getSafeData([data.meskenToplam, data.isyeri], t);
+            charts[key] = new Chart(ctx, {
+                type: 'doughnut',
+                data: { labels: [\`Mesken (\${data.meskenToplam.toLocaleString('tr-TR')}) %\${pct(data.meskenToplam, t)}\`, \`İşyeri (\${data.isyeri.toLocaleString('tr-TR')}) %\${pct(data.isyeri, t)}\`], datasets: [{ data: safeData, backgroundColor: ['#4CAF50', '#FF9800'], borderWidth: 0 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { tooltip: { callbacks: { label: function(context) { return ' ' + context.label; } } }, legend: { position: 'bottom', labels: { padding: 20, usePointStyle: true, font: { size: key.startsWith('combined') ? 11 : 12 }, color: isDark ? '#c2c6d6' : '#475569' } } } }
+            });
+        }
+
+        function renderExcelChart(data, canvasId, key) {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            if (charts[key]) charts[key].destroy();
+            const isDark = document.documentElement.classList.contains('dark');
+            const t = data.genelToplam.toplam;
+            const safeData = getSafeData([data.genelToplam.mesken, data.genelToplam.kamu, data.genelToplam.isyeri], t);
+            charts[key] = new Chart(ctx, {
+                type: 'doughnut',
+                data: { labels: [\`Mesken (\${data.genelToplam.mesken.toLocaleString('tr-TR')}) %\${pct(data.genelToplam.mesken, t)}\`, \`Kamu (\${data.genelToplam.kamu.toLocaleString('tr-TR')}) %\${pct(data.genelToplam.kamu, t)}\`, \`İşyeri (\${data.genelToplam.isyeri.toLocaleString('tr-TR')}) %\${pct(data.genelToplam.isyeri, t)}\`], datasets: [{ data: safeData, backgroundColor: ['#4CAF50', '#2196F3', '#FF9800'], borderWidth: 0 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { tooltip: { callbacks: { label: function(context) { return ' ' + context.label; } } }, legend: { position: 'bottom', labels: { padding: 20, usePointStyle: true, font: { size: key.startsWith('combined') ? 11 : 12 }, color: isDark ? '#c2c6d6' : '#475569' } } } }
+            });
+        }
+
         function toggleChart(chartId) {
             const container = document.getElementById(chartId);
             const icon = document.getElementById(chartId + 'Icon');
             const webLayout = container.closest('.web-layout');
-            if (container) {
-                if (!container.classList.contains('hidden') && container.style.display !== 'none') {
-                    container.classList.add('hidden');
-                    container.style.display = 'none';
-                    if (icon) icon.textContent = '▼';
-                    if (webLayout) webLayout.classList.remove('has-chart');
-                } else {
-                    container.classList.remove('hidden');
-                    container.style.display = 'block';
-                    if (icon) icon.textContent = '▲';
-                    if (webLayout) webLayout.classList.add('has-chart');
-                }
+            const canvasId = container.querySelector('canvas')?.id;
+
+            if (!container.classList.contains('hidden') && container.style.display !== 'none') {
+                container.classList.add('hidden');
+                container.style.display = 'none';
+                icon.textContent = '▼';
+                if (webLayout) webLayout.classList.remove('has-chart');
+            } else {
+                container.classList.remove('hidden');
+                container.style.display = 'block';
+                icon.textContent = '▲';
+                if (webLayout) webLayout.classList.add('has-chart');
+                // Grafikleri yeniden ciz
+                setTimeout(() => {
+                    if (canvasId === 'pdfChart' && window.pdfData) renderPDFChart(window.pdfData, canvasId, 'pdf');
+                    else if (canvasId === 'combinedPdfChart' && window.pdfData) renderPDFChart(window.pdfData, canvasId, 'combinedPdf');
+                    else if (canvasId === 'excelChart' && window.excelData) renderExcelChart(window.excelData, canvasId, 'excel');
+                    else if (canvasId === 'combinedExcelChart' && window.excelData) renderExcelChart(window.excelData, canvasId, 'combinedExcel');
+                }, 50);
             }
         }
+
+        // Veriler
+        const pdfData = ${pdfDataJson};
+        const excelData = ${excelDataJson};
+        
+        window.addEventListener('load', function() {
+            if (pdfData) {
+                if (document.getElementById('pdfChart')) renderPDFChart(pdfData, 'pdfChart', 'pdf');
+                if (document.getElementById('combinedPdfChart')) renderPDFChart(pdfData, 'combinedPdfChart', 'combinedPdf');
+            }
+            if (excelData) {
+                if (document.getElementById('excelChart')) renderExcelChart(excelData, 'excelChart', 'excel');
+                if (document.getElementById('combinedExcelChart')) renderExcelChart(excelData, 'combinedExcelChart', 'combinedExcel');
+            }
+        });
     <\/script>
+    <style>
+        ${customStyles}
+        body { padding: 20px; text-align: left; }
+    </style>
 </head>
 <body class="bg-[#f8fafc] dark:bg-[#10131a] text-slate-800 dark:text-[#e1e2ec]" style="background-image: radial-gradient(at 0% 0%, rgba(76, 175, 80, 0.05) 0px, transparent 50%), radial-gradient(at 100% 0%, rgba(255, 152, 0, 0.05) 0px, transparent 50%); min-height: 100vh;">
     <div style="max-width: 900px; margin: 0 auto;">
