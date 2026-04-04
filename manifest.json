@@ -1,5 +1,5 @@
 {
-  "name": "Adres Verileri Temel Raporu",
+  "name": "Adres Verileri Raporu",
   "short_name": "Adres Raporu",
   "start_url": "./index.html",
   "display": "standalone",
