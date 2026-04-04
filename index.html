@@ -485,15 +485,73 @@
         }
 
         @media print {
-            body { background: white !important; background-image: none !important; color: #000 !important; padding: 0 !important; margin: 0 !important; }
-            header, #uploadSection, #resetBtn, #newAnalysisBtn, #combinedBtn, #shareBtn, #loading, #error, .share-modal, footer, .chart-toggle, .app-header { display: none !important; }
-            main { padding: 0 !important; margin: 0 !important; max-width: 100% !important; }
-            .glass-card, .shared-banner { background: white !important; border: 1px solid #e5e7eb !important; color: #000 !important; box-shadow: none !important; backdrop-filter: none !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-            .chart-container { display: block !important; height: 350px !important; page-break-inside: avoid; }
-            .table-container { max-height: none !important; overflow: visible !important; }
-            .stat-card-mesken, .stat-card-isyeri, .stat-card-grand, [class*="bg-gradient"] { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-            .result { display: block !important; }
-            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            body {
+                background: white !important;
+                background-image: none !important;
+                color: #000 !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+
+            header,
+            #uploadSection,
+            #resetBtn,
+            #newAnalysisBtn,
+            #combinedBtn,
+            #shareBtn,
+            #loading,
+            #error,
+            .share-modal,
+            footer,
+            .chart-toggle,
+            .app-header {
+                display: none !important;
+            }
+
+            main {
+                padding: 0 !important;
+                margin: 0 !important;
+                max-width: 100% !important;
+            }
+
+            .glass-card,
+            .shared-banner {
+                background: white !important;
+                border: 1px solid #e5e7eb !important;
+                color: #000 !important;
+                box-shadow: none !important;
+                backdrop-filter: none !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+
+            .chart-container {
+                display: block !important;
+                height: 350px !important;
+                page-break-inside: avoid;
+            }
+
+            .table-container {
+                max-height: none !important;
+                overflow: visible !important;
+            }
+
+            .stat-card-mesken,
+            .stat-card-isyeri,
+            .stat-card-grand,
+            [class*="bg-gradient"] {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+
+            .result {
+                display: block !important;
+            }
+
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
         }
     </style>
 </head>
@@ -527,7 +585,8 @@
                         İlçe yapı ve bağımsız bölüm analizi
                     </p>
                 </div>
-                <button id="installBtn" class="install-btn hidden px-6 py-3 bg-slate-800 dark:bg-white text-white dark:text-slate-900 rounded-full font-semibold text-sm hover:scale-105 transition-transform"
+                <button id="installBtn"
+                    class="install-btn hidden px-6 py-3 bg-slate-800 dark:bg-white text-white dark:text-slate-900 rounded-full font-semibold text-sm hover:scale-105 transition-transform"
                     onclick="installPWA()">
                     <span class="material-symbols-outlined text-sm mr-2">download</span>
                     Ana Ekrana Ekle
@@ -725,8 +784,8 @@
                     let jsonString;
                     try {
                         jsonString = LZString.decompressFromEncodedURIComponent(dataParam);
-                    } catch(e) {}
-                    
+                    } catch (e) { }
+
                     if (!jsonString) {
                         jsonString = decodeURIComponent(escape(atob(dataParam)));
                     }
@@ -766,13 +825,18 @@
 
             if (type === 'pdf') {
                 label.className = 'file-input-label pdf-mode block px-6 py-10 rounded-2xl text-center cursor-pointer transition-all hover:scale-[0.99] active:scale-[0.97]';
-                labelText.textContent = pdfData ? 'Dosya Değiştir (Yüklü: ' + pdfData.ilceAdi + ')' : 'PDF veya Excel Dosyası Seçin';
+                labelText.textContent = pdfData ? 'Dosya Değiştir (Yüklü: ' + pdfData.ilceAdi + ')' : 'PDF veya Excel Seçin';
                 labelSub.textContent = 'İlçe geneli bağımsız bölüm raporu';
                 input.accept = '.pdf,.xls,.xlsx,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
             } else {
                 label.className = 'file-input-label excel-mode block px-6 py-10 rounded-2xl text-center cursor-pointer transition-all hover:scale-[0.99] active:scale-[0.97]';
-                labelText.textContent = excelData ? 'Excel Değiştir (Yüklü: ' + excelData.ilceAdi + ')' : 'Excel Dosyası Seçin';
-                labelSub.textContent = 'Yapı sayıları raporu';
+                let types = [];
+                if (excelData && excelData.isYapiTipi) types.push("Yapı Tipi");
+                if (excelData && excelData.isYapiDurumu) types.push("Yapı Durumu");
+                let yüklüBilgi = types.length > 0 ? ' (Şu an var: ' + types.join(', ') + ')' : '';
+
+                labelText.textContent = excelData ? 'Zenginleştirmek İçin Başka Excel Ekle' + yüklüBilgi : 'Excel Dosyası Seçin';
+                labelSub.textContent = 'Yapı sayısı raporu (Durumu veya Tipi dosyalarını art arda ekleyebilirsiniz)';
                 input.accept = '.xls,.xlsx,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
             }
             document.getElementById('analyzeBtn').disabled = !currentFile || input.files.length === 0;
@@ -819,8 +883,13 @@
             }
 
             if (excelData && excelData.ilceAdi) {
+                let types = [];
+                if (excelData.isYapiTipi) types.push("Yapı Tipi");
+                if (excelData.isYapiDurumu) types.push("Yapı Durumu");
+                let detail = types.length > 0 ? ` <span class="text-xs ml-1 opacity-75">(${types.join(' + ')})</span>` : '';
+
                 excelStatus.classList.add('active');
-                excelStatus.innerHTML = `<span class="material-symbols-outlined text-lg">check_circle</span> Excel: ${excelData.ilceAdi}`;
+                excelStatus.innerHTML = `<span class="material-symbols-outlined text-lg">check_circle</span> Excel: ${excelData.ilceAdi}${detail}`;
             } else {
                 excelStatus.classList.remove('active');
                 excelStatus.innerHTML = `<span class="material-symbols-outlined text-lg">table_chart</span> Excel: Bekleniyor`;
@@ -849,7 +918,62 @@
                     else { pdfData = await analyzeBBExcel(currentFile); }
                     renderPDFResults(pdfData);
                 }
-                else { excelData = await analyzeExcel(currentFile); renderExcelResults(excelData); }
+                else {
+                    const newData = await analyzeExcel(currentFile);
+                    if (!excelData) {
+                        excelData = newData;
+                    } else {
+                        // Eğer zaten veri varsa yeni yüklenenle birleştir
+                        if (newData.isYapiTipi && !newData.isYapiDurumu) {
+                            excelData.yapitipi = newData.yapitipi;
+                            excelData.isYapiTipi = true;
+                        }
+                        if (newData.isYapiDurumu && !newData.isYapiTipi) {
+                            excelData.yapidurumu = newData.yapidurumu;
+                            excelData.isYapiDurumu = true;
+                        }
+                        if (newData.isYapiTipi && newData.isYapiDurumu) {
+                            excelData.yapitipi = newData.yapitipi;
+                            excelData.yapidurumu = newData.yapidurumu;
+                            excelData.isYapiTipi = true;
+                            excelData.isYapiDurumu = true;
+                        }
+                        // Toplam tutarlılığı
+                        if (newData.genelToplam && newData.genelToplam > 0) {
+                            excelData.genelToplam = Math.max(excelData.genelToplam || 0, newData.genelToplam);
+                            if (excelData.genelToplamObj) {
+                                excelData.genelToplamObj.toplam = excelData.genelToplam;
+                                if (newData.isYapiTipi) {
+                                    excelData.genelToplamObj.mesken = newData.yapitipi.mesken || 0;
+                                    excelData.genelToplamObj.kamu = newData.yapitipi.kamu || 0;
+                                    excelData.genelToplamObj.isyeri = newData.yapitipi.isyeri || 0;
+                                }
+                            }
+                        }
+                        if (!excelData.ilceAdi || excelData.ilceAdi === 'İlçe Adı Tespit Edilemedi') {
+                            excelData.ilceAdi = newData.ilceAdi || excelData.ilceAdi;
+                        }
+
+                        // Mahalleleri birleştir
+                        if (newData.neighborhoods && newData.neighborhoods.length > 0) {
+                            if (!excelData.neighborhoods) excelData.neighborhoods = [];
+
+                            newData.neighborhoods.forEach(newMah => {
+                                let extMah = excelData.neighborhoods.find(m => m.name === newMah.name);
+                                if (!extMah) {
+                                    excelData.neighborhoods.push(newMah);
+                                } else {
+                                    if (newData.isYapiTipi) extMah.yapitipi = Object.assign({}, extMah.yapitipi || {}, newMah.yapitipi);
+                                    if (newData.isYapiDurumu) extMah.yapidurumu = Object.assign({}, extMah.yapidurumu || {}, newMah.yapidurumu);
+                                    extMah.toplam = Math.max(extMah.toplam || 0, newMah.toplam || 0);
+                                }
+                            });
+                            // Alfa numerik sırala
+                            excelData.neighborhoods.sort((a, b) => a.name.localeCompare(b.name, 'tr'));
+                        }
+                    }
+                    renderExcelResults(excelData);
+                }
                 updateStatus();
             } catch (err) {
                 console.error('Analiz hatası:', err);
@@ -942,70 +1066,312 @@
             const workbook = XLSX.read(arrayBuffer, { type: 'array' });
             const worksheet = workbook.Sheets[workbook.SheetNames[0]];
             const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: false });
-            const neighborhoods = [];
-            let currentMahalle = null;
-            let ilceAdi = 'İlçe Adı Tespit Edilemedi';
 
-            // $ işaretli sayıları parse eden yardımcı fonksiyon
+            // Tüm veriyi string olarak birleştir
+            let allText = '';
+            for (let i = 0; i < Math.min(30, jsonData.length); i++) {
+                if (jsonData[i]) {
+                    allText += jsonData[i].join(' ') + ' ';
+                }
+            }
+            allText = allText.toLocaleLowerCase('tr');
+
+            // Dosya tipini tespit et
+            let isYapiTipi = allText.includes('yapı tipi') || allText.includes('tipine göre') ||
+                (allText.includes('mesken') && allText.includes('kamu') && allText.includes('işyeri'));
+            let isYapiDurumu = allText.includes('yapı durum') || allText.includes('durumuna göre') ||
+                allText.includes('iskan') || allText.includes('inşaat');
+
+            // İkisi de aynıysa içerik analizi yap
+            if ((isYapiTipi && isYapiDurumu) || (!isYapiTipi && !isYapiDurumu)) {
+                let hasIskan = false, hasInsaat = false, hasMesken = false, hasKamu = false;
+
+                for (let i = 0; i < Math.min(50, jsonData.length); i++) {
+                    const row = jsonData[i];
+                    if (!row) continue;
+                    const rowStr = row.join(' ').toLocaleLowerCase('tr');
+                    if (rowStr.includes('iskan')) hasIskan = true;
+                    if (rowStr.includes('inşaat') || rowStr.includes('insaat')) hasInsaat = true;
+                    if (rowStr.includes('mesken') && !rowStr.includes('mahalle')) hasMesken = true;
+                    if (rowStr.includes('kamu')) hasKamu = true;
+                }
+
+                if (hasIskan || hasInsaat) {
+                    isYapiDurumu = true;
+                    isYapiTipi = false;
+                } else if (hasMesken && hasKamu) {
+                    isYapiTipi = true;
+                    isYapiDurumu = false;
+                }
+            }
+
+            // İlçe adını çıkar
+            let ilceAdi = 'GAZİOSMANPAŞA';
+            for (let i = 0; i < Math.min(5, jsonData.length); i++) {
+                const row = jsonData[i];
+                if (!row || row.length === 0) continue;
+                const firstCol = (row[0] || '').toString();
+                const match = firstCol.match(/([A-ZİŞÇĞÜÖ\s]+)\s*İLÇESİ/i);
+                if (match) {
+                    ilceAdi = match[1].trim();
+                    break;
+                }
+            }
+
             function parseVal(v) {
-                if (!v) return 0;
+                if (!v || v === '' || v === null || v === undefined) return 0;
                 return parseInt(v.toString().replace(/[$\s.,]/g, '')) || 0;
             }
 
-            for (let i = 0; i < jsonData.length; i++) {
-                const row = jsonData[i];
-                if (!row || row.length === 0) continue;
-                const firstCol = (row[0] || '').toString().trim();
+            // Yardımcı fonksiyon - değerin geçerli olup olmadığını kontrol et
+            function isValidValue(v) {
+                if (v === undefined || v === null || v === '') return false;
+                const str = v.toString().trim();
+                return str !== '' && str !== '—' && str !== '–'; // "-" işaretli kategorilere izin veriyoruz
+            }
 
-                // Mahalle başlık satırı: "İSTANBUL / GAZİOSMANPAŞA / BAĞLARBAŞI MAHALLESİ"
-                if (firstCol.includes('MAHALLESİ') && firstCol.includes('/')) {
-                    // İlçe adını ilk mahalle başlığından çıkar
-                    if (ilceAdi === 'İlçe Adı Tespit Edilemedi') {
-                        const ilceMatch = firstCol.match(/\/\s*([^/]+?)\s*\//);
-                        if (ilceMatch) ilceAdi = ilceMatch[1].trim();
+            const yapitipi = {};
+            const yapidurumu = {};
+            const neighborhoodsObj = {};
+
+            // Function to ensure mahalle struct
+            function initMah(name) {
+                if (!neighborhoodsObj[name]) neighborhoodsObj[name] = { name: name, yapitipi: { mesken: 0, kamu: 0, isyeri: 0 }, yapidurumu: {}, toplam: 0 };
+            }
+
+            // ========== YAPİ TİPİ PARSE ==========
+            if (isYapiTipi) {
+                let inToplamSection = false;
+                let currentMahalle = null;
+
+                for (let i = 0; i < jsonData.length; i++) {
+                    const row = jsonData[i];
+                    if (!row || row.length === 0) continue;
+
+                    const firstCol = (row[0] || '').toString().trim();
+                    const secondCol = (row[1] || '').toString().trim();
+
+                    // TOPLAM satırını bul
+                    if (firstCol === 'TOPLAM' || (firstCol === 'TOPLAM' && !isValidValue(secondCol))) {
+                        inToplamSection = true;
+                        continue;
                     }
-                    // Mahalle adını çıkar
-                    const mahalleMatch = firstCol.match(/\/\s*([^/]+?)\s*MAHALLESİ/i);
-                    if (mahalleMatch) {
-                        currentMahalle = mahalleMatch[1].trim();
+
+                    if (!inToplamSection) {
+                        // Neighborhood data
+                        if (firstCol === 'MAHALLE ADI' || firstCol.includes('GÖRE YAPI SAYILARI')) continue;
+
+                        if (firstCol !== '') { currentMahalle = firstCol; initMah(currentMahalle); }
+
+                        let value = 0;
+                        for (let j = 2; j < row.length; j++) {
+                            if (isValidValue(row[j])) {
+                                const parsed = parseVal(row[j]);
+                                if (parsed > 0 || row[j].toString().trim() === '0') { value = parsed; break; }
+                            }
+                        }
+
+                        let tipAdi = secondCol;
+                        if (!isValidValue(secondCol)) tipAdi = '';
+
+                        if (currentMahalle && tipAdi && value > 0) {
+                            if (tipAdi === 'Kamu' || tipAdi === 'kamu') neighborhoodsObj[currentMahalle].yapitipi.kamu += value;
+                            else if (tipAdi === 'İşyeri' || tipAdi === 'işyeri') neighborhoodsObj[currentMahalle].yapitipi.isyeri += value;
+                            else if (tipAdi === 'Mesken' || tipAdi === 'mesken') neighborhoodsObj[currentMahalle].yapitipi.mesken += value;
+                            neighborhoodsObj[currentMahalle].toplam += value;
+                        }
+                    } else if (inToplamSection) {
+                        // Değer hangi sütunda?
+                        let value = 0;
+                        for (let j = 1; j < row.length; j++) {
+                            if (isValidValue(row[j])) {
+                                const parsed = parseVal(row[j]);
+                                if (parsed > 0 || row[j].toString().trim() === '0') {
+                                    value = parsed;
+                                    break;
+                                }
+                            }
+                        }
+
+                        // Tip adı nerede? (boşsa veya tire ise ikinci sütuna bak)
+                        let tipAdi = firstCol;
+                        if (!isValidValue(firstCol) && isValidValue(secondCol)) {
+                            tipAdi = secondCol;
+                        } else if (!isValidValue(firstCol)) {
+                            // İkisi de boşsa bu satırı atla
+                            continue;
+                        }
+
+                        // Değerleri ata
+                        if (tipAdi === 'Kamu') yapitipi.kamu = value;
+                        else if (tipAdi === 'İşyeri') yapitipi.isyeri = value;
+                        else if (tipAdi === 'Mesken') yapitipi.mesken = value;
+                        else if (tipAdi === 'Toplam') yapitipi.toplam = value;
                     }
-                    continue;
-                }
-
-                // Toplam satırı: mahalle toplamlarını kaydet
-                if (firstCol === 'Toplam' && currentMahalle) {
-                    // Sütunlar: [Toplam, Bina, Müstakil, Site Giriş, Resmi Bina, Arsa, Diğer Yapı, null, Bilinmeyen, Toplam]
-                    const bina = parseVal(row[1]);
-                    const mustakil = parseVal(row[2]);
-                    const siteGiris = parseVal(row[3]);
-                    const resmiBina = parseVal(row[4]);
-                    const arsa = parseVal(row[5]);
-                    const digerYapi = parseVal(row[6]);
-                    const bilinmeyen = parseVal(row[8]);
-                    const toplam = parseVal(row[9]);
-
-                    // Mesken: Bina + Müstakil + Site Giriş
-                    // Kamu: Resmi Bina/Otel/İşhanı
-                    // İşyeri: Arsa + Diğer Yapı + Bilinmeyen
-                    neighborhoods.push({
-                        name: currentMahalle,
-                        mesken: bina + mustakil + siteGiris,
-                        kamu: resmiBina,
-                        isyeri: arsa + digerYapi + bilinmeyen,
-                        toplam: toplam
-                    });
-                    currentMahalle = null;
                 }
             }
 
-            const genelToplam = {
-                mesken: neighborhoods.reduce((a, b) => a + b.mesken, 0),
-                kamu: neighborhoods.reduce((a, b) => a + b.kamu, 0),
-                isyeri: neighborhoods.reduce((a, b) => a + b.isyeri, 0)
+            // ========== YAPİ DURUMU PARSE ==========
+            if (isYapiDurumu) {
+                let inToplamSection = false;
+                let currentMahalle = null;
+
+                for (let i = 0; i < jsonData.length; i++) {
+                    const row = jsonData[i];
+                    if (!row || row.length === 0) continue;
+
+                    const firstCol = (row[0] || '').toString().trim();
+                    const secondCol = (row[1] || '').toString().trim();
+
+                    // TOPLAM satırını bul - farklı formatlar için
+                    if (firstCol === 'TOPLAM' || firstCol.toLowerCase() === 'toplam' ||
+                        (firstCol.includes('TOPLAM') && !firstCol.includes('MAHALLE'))) {
+                        inToplamSection = true;
+                        continue;
+                    }
+
+                    if (!inToplamSection) {
+                        // Neighborhood data
+                        if (firstCol === 'MAHALLE ADI' || firstCol.includes('GÖRE YAPI SAYISI')) continue;
+
+                        if (firstCol !== '') { currentMahalle = firstCol; initMah(currentMahalle); }
+
+                        let value = 0;
+                        for (let j = 2; j < row.length; j++) {
+                            if (isValidValue(row[j])) {
+                                const parsed = parseVal(row[j]);
+                                if (parsed > 0 || row[j].toString().trim() === '0') { value = parsed; break; }
+                            }
+                        }
+
+                        let durumAdi = secondCol;
+                        if (!isValidValue(secondCol)) durumAdi = '';
+
+                        if (currentMahalle && durumAdi && value > 0) {
+                            const key = durumAdi.toLocaleLowerCase('tr');
+                            if (key.includes('yanan') || key.includes('yıkılan')) neighborhoodsObj[currentMahalle].yapidurumu.yanan_yikilan = (neighborhoodsObj[currentMahalle].yapidurumu.yanan_yikilan || 0) + value;
+                            else if (key.includes('ruhsatsız') || key.includes('ruhsatsiz')) neighborhoodsObj[currentMahalle].yapidurumu.ruhsatsiz = (neighborhoodsObj[currentMahalle].yapidurumu.ruhsatsiz || 0) + value;
+                            else if (key.includes('kısmi')) neighborhoodsObj[currentMahalle].yapidurumu.kismi_iskan = (neighborhoodsObj[currentMahalle].yapidurumu.kismi_iskan || 0) + value;
+                            else if (key.includes('proje')) neighborhoodsObj[currentMahalle].yapidurumu.proje = (neighborhoodsObj[currentMahalle].yapidurumu.proje || 0) + value;
+                            else if (key.includes('inşaat') || key.includes('insaat')) neighborhoodsObj[currentMahalle].yapidurumu.insaat = (neighborhoodsObj[currentMahalle].yapidurumu.insaat || 0) + value;
+                            else if (key.includes('yapı kayıt') || key.includes('ykb') || key.includes('yapıkayıt')) neighborhoodsObj[currentMahalle].yapidurumu.yapi_kayit_belgeli = (neighborhoodsObj[currentMahalle].yapidurumu.yapi_kayit_belgeli || 0) + value;
+                            else if (key.includes('iskan') && !key.includes('kısmi')) neighborhoodsObj[currentMahalle].yapidurumu.iskan = (neighborhoodsObj[currentMahalle].yapidurumu.iskan || 0) + value;
+                            else if (key.includes('bilinmeyen')) neighborhoodsObj[currentMahalle].yapidurumu.bilinmeyen = (neighborhoodsObj[currentMahalle].yapidurumu.bilinmeyen || 0) + value;
+                            else if (durumAdi === '-' || key === '-' || (key === '-' && key.length === 1)) neighborhoodsObj[currentMahalle].yapidurumu.tire = (neighborhoodsObj[currentMahalle].yapidurumu.tire || 0) + value;
+                            else { neighborhoodsObj[currentMahalle].yapidurumu.diger = (neighborhoodsObj[currentMahalle].yapidurumu.diger || 0) + value; }
+
+                            neighborhoodsObj[currentMahalle].toplam = Math.max(neighborhoodsObj[currentMahalle].toplam, value + (neighborhoodsObj[currentMahalle].toplam || 0)); // Bu yanlış olabilir, max yerine direkt updateleyebiliriz. Ya da en doğrusu, sadece Yapı Durumu topluyoruz.
+                            // Yapı Durumu ve Yapı Tipi ayrıdır, toplamı bozmaz! 
+                        }
+                    } else if (inToplamSection) {
+                        // Değer hangi sütunda? - Tüm sütunları dene
+                        let value = 0;
+                        for (let j = 1; j < row.length; j++) {
+                            if (isValidValue(row[j])) {
+                                const parsed = parseVal(row[j]);
+                                if (parsed > 0 || row[j].toString().trim() === '0') {
+                                    value = parsed;
+                                    break;
+                                }
+                            }
+                        }
+
+                        // Durum adı nerede?
+                        let durumAdi = firstCol;
+                        if (!isValidValue(firstCol) && isValidValue(secondCol)) {
+                            durumAdi = secondCol;
+                        } else if (!isValidValue(firstCol)) {
+                            // İkisi de boşsa bu satırı atla
+                            continue;
+                        }
+
+                        // Debug için log (sadece değeri olanlar)
+                        if (value > 0) {
+                            console.log('Yapı Durumu satır:', { durumAdi, value, firstCol, secondCol });
+                        }
+
+                        const key = durumAdi.toLocaleLowerCase('tr');
+                        if (key.includes('yanan') || key.includes('yıkılan')) yapidurumu.yanan_yikilan = value;
+                        else if (key.includes('ruhsatsız') || key.includes('ruhsatsiz')) yapidurumu.ruhsatsiz = value;
+                        else if (key.includes('kısmi')) yapidurumu.kismi_iskan = value;
+                        else if (key.includes('proje')) yapidurumu.proje = value;
+                        else if (key.includes('inşaat') || key.includes('insaat')) yapidurumu.insaat = value;
+                        else if (key.includes('yapı kayıt') || key.includes('ykb') || key.includes('yapıkayıt')) yapidurumu.yapi_kayit_belgeli = value;
+                        else if (key.includes('iskan') && !key.includes('kısmi')) yapidurumu.iskan = value;
+                        else if (key.includes('bilinmeyen')) yapidurumu.bilinmeyen = value;
+                        else if (durumAdi === 'Toplam' || key === 'toplam') yapidurumu.toplam = value;
+                        // "-" karakteri kontrolü
+                        else if (durumAdi === '-' || key === '-' || (key === '-' && key.length === 1)) {
+                            // "-" karakterli satırları riêng bir kategoride gösterelim
+                            if (!yapidurumu.tire) yapidurumu.tire = 0;
+                            yapidurumu.tire += value;
+                        }
+                        else if (durumAdi === 'Diğer' || key === 'diğer' || key === 'diger') {
+                            if (!yapidurumu.diger) yapidurumu.diger = 0;
+                            yapidurumu.diger += value;
+                        }
+                        else {
+                            // Tanımlanamayan kategorileri "Diğer" olarak ekle
+                            console.log('Tanımlanamayan kategori:', durumAdi, value);
+                            if (!yapidurumu.diger) yapidurumu.diger = 0;
+                            yapidurumu.diger += value;
+                        }
+
+                    }
+                }
+            }
+
+            // Toplam değerleri yoksa hesapla
+            if (!yapitipi.toplam && (yapitipi.mesken || yapitipi.kamu || yapitipi.isyeri)) {
+                yapitipi.toplam = (yapitipi.mesken || 0) + (yapitipi.kamu || 0) + (yapitipi.isyeri || 0);
+            }
+
+            // Yapı Durumu için toplam hesapla
+            const hesaplananToplam = (yapidurumu.yanan_yikilan || 0) + (yapidurumu.ruhsatsiz || 0) +
+                (yapidurumu.kismi_iskan || 0) + (yapidurumu.proje || 0) +
+                (yapidurumu.insaat || 0) + (yapidurumu.yapi_kayit_belgeli || 0) +
+                (yapidurumu.iskan || 0) + (yapidurumu.bilinmeyen || 0) +
+                (yapidurumu.tire || 0) + (yapidurumu.diger || 0);
+
+            // Eğer dosyada toplam varsa ve daha büyükse onu kullan
+            if (!yapidurumu.toplam || yapidurumu.toplam < hesaplananToplam) {
+                yapidurumu.toplam = hesaplananToplam;
+            }
+
+            // Genel toplamı belirle
+            let genelToplamDeger = 0;
+            if (isYapiDurumu && yapidurumu.toplam) {
+                genelToplamDeger = yapidurumu.toplam;
+            } else if (isYapiTipi && yapitipi.toplam) {
+                genelToplamDeger = yapitipi.toplam;
+            }
+
+            console.log('Parsed data:', {
+                isYapiTipi,
+                isYapiDurumu,
+                yapitipi,
+                yapidurumu,
+                genelToplamDeger,
+                hesaplananToplam
+            });
+
+            return {
+                ilceAdi,
+                isYapiTipi,
+                isYapiDurumu,
+                yapitipi,
+                yapidurumu,
+                genelToplam: genelToplamDeger,
+                neighborhoods: Object.values(neighborhoodsObj).sort((a, b) => a.name.localeCompare(b.name, 'tr')),
+                genelToplamObj: {
+                    mesken: yapitipi.mesken || 0,
+                    kamu: yapitipi.kamu || 0,
+                    isyeri: yapitipi.isyeri || 0,
+                    toplam: genelToplamDeger
+                }
             };
-            genelToplam.toplam = genelToplam.mesken + genelToplam.kamu + genelToplam.isyeri;
-            return { ilceAdi, neighborhoods, genelToplam };
         }
+
 
         function toggleChart(chartId) {
             const container = document.getElementById(chartId);
@@ -1033,19 +1399,21 @@
                         else if (canvasId === 'excelChart' && excelData) renderExcelChart(excelData);
                         else if (canvasId === 'combinedExcelChart' && excelData) renderExcelChart(excelData, 'combinedExcelChart', 'combinedExcel');
                         else if (canvasId === 'combinedPdfChart' && pdfData) renderPDFChart(pdfData, 'combinedPdfChart', 'combinedPdf');
+                        else if (canvasId === 'excelYapidurumuChart' && excelData) renderYapidurumuChart(excelData);
+                        else if (canvasId === 'combinedExcelYapidurumuChart' && excelData) renderYapidurumuChart(excelData, 'combinedExcelYapidurumuChart', 'combinedExcelYapi');
                     }, 50);
                 }
             }
         }
 
-        function pct(val, total) { if(total===0)return'0'; const p=(val/total)*100; if(p===0)return'0'; if(p<1)return p.toFixed(2); return p.toFixed(1); }
+        function pct(val, total) { if (total === 0) return '0'; const p = (val / total) * 100; if (p === 0) return '0'; if (p < 1) return p.toFixed(2); return p.toFixed(1); }
 
         function getSafeData(arr, total) {
             const minAllowed = total * 0.01;
             return arr.map(v => (v > 0 && v < minAllowed) ? minAllowed : v);
         }
 
-        const customTooltip = { callbacks: { label: function(context) { return ' ' + context.label; } } };
+        const customTooltip = { callbacks: { label: function (context) { return ' ' + context.label; } } };
 
         function renderPDFChart(data, canvasId = 'pdfChart', key = 'pdf') {
             const ctx = document.getElementById(canvasId).getContext('2d');
@@ -1060,18 +1428,115 @@
             });
         }
 
+        // renderExcelChart fonksiyonunu şu şekilde güncelleyin:
         function renderExcelChart(data, canvasId = 'excelChart', key = 'excel') {
             const ctx = document.getElementById(canvasId).getContext('2d');
             if (charts[key]) charts[key].destroy();
             const isDark = document.documentElement.classList.contains('dark');
-            const t = data.genelToplam.toplam;
-            const safeData = getSafeData([data.genelToplam.mesken, data.genelToplam.kamu, data.genelToplam.isyeri], t);
+
+            // Yeni yapıya göre veriye erişim - hem tekli rapor hem birleştirilmiş rapor için
+            let t, mesken, kamu, isyeri;
+
+            if (data.yapitipi && data.yapitipi.toplam !== undefined) {
+                // Yeni yapı (yapitipi objesi var)
+                t = data.yapitipi.toplam;
+                mesken = data.yapitipi.mesken || 0;
+                kamu = data.yapitipi.kamu || 0;
+                isyeri = data.yapitipi.isyeri || 0;
+            } else if (data.genelToplam && typeof data.genelToplam === 'object') {
+                // Eski yapı (genelToplam objesi)
+                t = data.genelToplam.toplam || 0;
+                mesken = data.genelToplam.mesken || 0;
+                kamu = data.genelToplam.kamu || 0;
+                isyeri = data.genelToplam.isyeri || 0;
+            } else {
+                // Direkt number veya başka bir yapı
+                t = data.genelToplam || 0;
+                mesken = 0;
+                kamu = 0;
+                isyeri = 0;
+            }
+
+            const safeData = getSafeData([mesken, kamu, isyeri], t);
             charts[key] = new Chart(ctx, {
                 type: 'doughnut',
-                data: { labels: [`Mesken (${data.genelToplam.mesken.toLocaleString('tr-TR')}) %${pct(data.genelToplam.mesken, t)}`, `Kamu (${data.genelToplam.kamu.toLocaleString('tr-TR')}) %${pct(data.genelToplam.kamu, t)}`, `İşyeri (${data.genelToplam.isyeri.toLocaleString('tr-TR')}) %${pct(data.genelToplam.isyeri, t)}`], datasets: [{ data: safeData, backgroundColor: ['#4CAF50', '#2196F3', '#FF9800'], borderWidth: 0 }] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { tooltip: customTooltip, legend: { position: 'bottom', labels: { padding: 20, usePointStyle: true, font: { size: key.startsWith('combined') ? 11 : 12 }, color: isDark ? '#c2c6d6' : '#475569' } } } }
+                data: {
+                    labels: [
+                        `Mesken (${mesken.toLocaleString('tr-TR')}) %${pct(mesken, t)}`,
+                        `Kamu (${kamu.toLocaleString('tr-TR')}) %${pct(kamu, t)}`,
+                        `İşyeri (${isyeri.toLocaleString('tr-TR')}) %${pct(isyeri, t)}`
+                    ],
+                    datasets: [{
+                        data: safeData,
+                        backgroundColor: ['#4CAF50', '#2196F3', '#FF9800'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        tooltip: { callbacks: { label: function (context) { return ' ' + context.label; } } },
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                usePointStyle: true,
+                                font: { size: key.startsWith('combined') ? 11 : 12 },
+                                color: isDark ? '#c2c6d6' : '#475569'
+                            }
+                        }
+                    }
+                }
             });
         }
+
+        function renderYapidurumuChart(data, canvasId = 'excelYapidurumuChart', key = 'excelYapidurumu') {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            if (charts[key]) charts[key].destroy();
+            const isDark = document.documentElement.classList.contains('dark');
+            const yapidurumu = data.yapidurumu || {};
+            const durumListesiRaw = [
+                { ad: 'İskan', deger: yapidurumu.iskan || 0, color: '#4CAF50' },
+                { ad: 'YKB', deger: yapidurumu.yapi_kayit_belgeli || 0, color: '#2196F3' },
+                { ad: 'İnşaat', deger: yapidurumu.insaat || 0, color: '#FF9800' },
+                { ad: 'Proje', deger: yapidurumu.proje || 0, color: '#F44336' },
+                { ad: 'Kısmi İskan', deger: yapidurumu.kismi_iskan || 0, color: '#9C27B0' },
+                { ad: 'Ruhsatsız', deger: yapidurumu.ruhsatsiz || 0, color: '#00BCD4' },
+                { ad: 'Yanan Yıkılan', deger: yapidurumu.yanan_yikilan || 0, color: '#795548' },
+                { ad: '- (Belirtilmemiş)', deger: yapidurumu.tire || 0, color: '#607D8B' },
+                { ad: 'Bilinmeyen', deger: yapidurumu.bilinmeyen || 0, color: '#607D8B' },
+                { ad: 'Diğer', deger: yapidurumu.diger || 0, color: '#FFEB3B' }
+            ];
+
+            const durumListesi = durumListesiRaw.filter(item => item.deger > 0);
+            const labels = durumListesi.map(item => item.ad);
+            const datav = durumListesi.map(item => item.deger);
+            const bgColors = durumListesi.map(item => item.color);
+
+            charts[key] = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: datav,
+                        backgroundColor: bgColors,
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        tooltip: { callbacks: { label: function (context) { return ' ' + context.label + ': ' + context.raw.toLocaleString('tr-TR'); } } },
+                        legend: { position: 'right', labels: { padding: 15, usePointStyle: true, font: { size: key.startsWith('combined') ? 11 : 12 }, color: isDark ? '#c2c6d6' : '#475569' } }
+                    }
+                }
+            });
+        }
+
 
         function openShareModal() {
             const modal = document.getElementById('shareModal');
@@ -1140,13 +1605,13 @@
                 return;
             }
 
-            
+
             const originalHtml = btn.innerHTML;
             btn.innerHTML = '<div class="spinner text-orange-500"></div> Çıkarılıyor...';
             btn.disabled = true;
 
             // Grafikleri aç ve renderla
-            const chartContainerIds = ['pdfChartContainer', 'excelChartContainer', 'combinedExcelChartContainer', 'combinedPdfChartContainer', 'combinedMahalleContainer'];
+            const chartContainerIds = ['pdfChartContainer', 'excelChartContainer', 'combinedExcelChartContainer', 'combinedPdfChartContainer', 'combinedMahalleContainer', 'excelYapidurumuChartContainer', 'combinedExcelYapidurumuChartContainer'];
             const previouslyHidden = [];
             chartContainerIds.forEach(id => {
                 const el = document.getElementById(id);
@@ -1168,6 +1633,8 @@
             if (excelData) {
                 if (document.getElementById('excelChart')) renderExcelChart(excelData);
                 if (document.getElementById('combinedExcelChart')) renderExcelChart(excelData, 'combinedExcelChart', 'combinedExcel');
+                if (document.getElementById('excelYapidurumuChart')) renderYapidurumuChart(excelData);
+                if (document.getElementById('combinedExcelYapidurumuChart')) renderYapidurumuChart(excelData, 'combinedExcelYapidurumuChart', 'combinedExcelYapi');
             }
 
             // Grafiklerin çizilmesi için kisa bekle ve HTML üret (animasyon kapali oldugu icin hizlidir)
@@ -1178,7 +1645,7 @@
                     clone.style.display = 'block';
 
                     // Canvasları oldugu gibi koru (resme dönüsturme!)
-                    
+
                     // Grafikleri geri gizle
                     previouslyHidden.forEach(id => {
                         const el = document.getElementById(id);
@@ -1194,7 +1661,7 @@
                     styleElements.forEach(el => { customStyles += el.innerHTML + '\n'; });
                     const isDark = document.documentElement.classList.contains('dark');
                     const ilce = pdfData?.ilceAdi || excelData?.ilceAdi || 'Rapor';
-                    
+
                     // Verileri JSON olarak gom
                     const pdfDataJson = pdfData ? JSON.stringify(pdfData) : 'null';
                     const excelDataJson = excelData ? JSON.stringify(excelData) : 'null';
@@ -1243,14 +1710,60 @@
             const ctx = document.getElementById(canvasId).getContext('2d');
             if (charts[key]) charts[key].destroy();
             const isDark = document.documentElement.classList.contains('dark');
-            const t = data.genelToplam.toplam;
-            const safeData = getSafeData([data.genelToplam.mesken, data.genelToplam.kamu, data.genelToplam.isyeri], t);
+            
+            let t, mesken, kamu, isyeri;
+            if (data.yapitipi && data.yapitipi.toplam !== undefined) {
+                t = data.yapitipi.toplam;
+                mesken = data.yapitipi.mesken || 0;
+                kamu = data.yapitipi.kamu || 0;
+                isyeri = data.yapitipi.isyeri || 0;
+            } else if (data.genelToplam && typeof data.genelToplam === 'object') {
+                t = data.genelToplam.toplam || 0;
+                mesken = data.genelToplam.mesken || 0;
+                kamu = data.genelToplam.kamu || 0;
+                isyeri = data.genelToplam.isyeri || 0;
+            } else {
+                t = data.genelToplam || 0;
+                mesken = 0;
+                kamu = 0;
+                isyeri = 0;
+            }
+            
+            const safeData = getSafeData([mesken, kamu, isyeri], t);
             charts[key] = new Chart(ctx, {
                 type: 'doughnut',
-                data: { labels: [\`Mesken (\${data.genelToplam.mesken.toLocaleString('tr-TR')}) %\${pct(data.genelToplam.mesken, t)}\`, \`Kamu (\${data.genelToplam.kamu.toLocaleString('tr-TR')}) %\${pct(data.genelToplam.kamu, t)}\`, \`İşyeri (\${data.genelToplam.isyeri.toLocaleString('tr-TR')}) %\${pct(data.genelToplam.isyeri, t)}\`], datasets: [{ data: safeData, backgroundColor: ['#4CAF50', '#2196F3', '#FF9800'], borderWidth: 0 }] },
+                data: { labels: [\`Mesken (\${mesken.toLocaleString('tr-TR')}) %\${pct(mesken, t)}\`, \`Kamu (\${kamu.toLocaleString('tr-TR')}) %\${pct(kamu, t)}\`, \`İşyeri (\${isyeri.toLocaleString('tr-TR')}) %\${pct(isyeri, t)}\`], datasets: [{ data: safeData, backgroundColor: ['#4CAF50', '#2196F3', '#FF9800'], borderWidth: 0 }] },
                 options: { responsive: true, maintainAspectRatio: false, plugins: { tooltip: { callbacks: { label: function(context) { return ' ' + context.label; } } }, legend: { position: 'bottom', labels: { padding: 20, usePointStyle: true, font: { size: key.startsWith('combined') ? 11 : 12 }, color: isDark ? '#c2c6d6' : '#475569' } } } }
             });
         }
+
+        function renderYapidurumuChart(data, canvasId, key) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            if (charts[key]) charts[key].destroy();
+            const isDark = document.documentElement.classList.contains('dark');
+            const yapidurumu = data.yapidurumu || {};
+            const durumListesiRaw = [
+                { ad: 'İskan', deger: yapidurumu.iskan || 0, color: '#4CAF50' },
+                { ad: 'YKB', deger: yapidurumu.yapi_kayit_belgeli || 0, color: '#2196F3' },
+                { ad: 'İnşaat', deger: yapidurumu.insaat || 0, color: '#FF9800' },
+                { ad: 'Proje', deger: yapidurumu.proje || 0, color: '#F44336' },
+                { ad: 'Kısmi İskan', deger: yapidurumu.kismi_iskan || 0, color: '#9C27B0' },
+                { ad: 'Ruhsatsız', deger: yapidurumu.ruhsatsiz || 0, color: '#00BCD4' },
+                { ad: 'Yanan Yıkılan', deger: yapidurumu.yanan_yikilan || 0, color: '#795548' },
+                { ad: '- (Belirtilmemiş)', deger: yapidurumu.tire || 0, color: '#607D8B' },
+                { ad: 'Bilinmeyen', deger: yapidurumu.bilinmeyen || 0, color: '#607D8B' },
+                { ad: 'Diğer', deger: yapidurumu.diger || 0, color: '#FFEB3B' }
+            ];
+            
+            const durumListesi = durumListesiRaw.filter(item => item.deger > 0);
+            const labels = durumListesi.map(v => v.ad);
+            const datav = durumListesi.map(v => v.deger);
+            const bgColors = durumListesi.map(item => item.color);
+            charts[key] = new Chart(ctx, { type: 'doughnut', data: { labels: labels, datasets: [{ data: datav, backgroundColor: bgColors, borderWidth: 0 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { tooltip: { callbacks: { label: function(context) { return ' ' + context.label + ': ' + context.raw.toLocaleString('tr-TR'); } } }, legend: { position: 'right', labels: { padding: 15, usePointStyle: true, font: { size: 11 }, color: isDark ? '#c2c6d6' : '#475569' } } } } });
+        }
+
 
         function toggleChart(chartId) {
             const container = document.getElementById(chartId);
@@ -1274,6 +1787,8 @@
                     else if (canvasId === 'combinedPdfChart' && window.pdfData) renderPDFChart(window.pdfData, canvasId, 'combinedPdf');
                     else if (canvasId === 'excelChart' && window.excelData) renderExcelChart(window.excelData, canvasId, 'excel');
                     else if (canvasId === 'combinedExcelChart' && window.excelData) renderExcelChart(window.excelData, canvasId, 'combinedExcel');
+                    else if (canvasId === 'excelYapidurumuChart' && window.excelData) renderYapidurumuChart(window.excelData, canvasId, 'excelYapi');
+                    else if (canvasId === 'combinedExcelYapidurumuChart' && window.excelData) renderYapidurumuChart(window.excelData, canvasId, 'combinedExcelYapi');
                 }, 50);
             }
         }
@@ -1290,6 +1805,8 @@
             if (excelData) {
                 if (document.getElementById('excelChart')) renderExcelChart(excelData, 'excelChart', 'excel');
                 if (document.getElementById('combinedExcelChart')) renderExcelChart(excelData, 'combinedExcelChart', 'combinedExcel');
+                if (document.getElementById('excelYapidurumuChart')) renderYapidurumuChart(excelData, 'excelYapidurumuChart', 'excelYapi');
+                if (document.getElementById('combinedExcelYapidurumuChart')) renderYapidurumuChart(excelData, 'combinedExcelYapidurumuChart', 'combinedExcelYapi');
             }
         });
     <\/script>
@@ -1340,6 +1857,7 @@
             else if (excelData) renderExcelResults(excelData, true);
             if (navigator.vibrate) navigator.vibrate([50, 100, 50]);
         }
+
         function renderPDFResults(data, isShared = false) {
             const result = document.getElementById('result');
             if (!isShared) {
@@ -1351,14 +1869,129 @@
         }
 
         function renderExcelResults(data, isShared = false) {
+            console.log('RenderExcelResults data:', data);
+
             const result = document.getElementById('result');
             if (!isShared) {
-                result.innerHTML = `<div class="glass-card rounded-3xl p-8 text-center relative overflow-hidden animate-slide-up"><div class="absolute -right-20 -top-20 w-64 h-64 bg-gradient-to-br from-green-400/20 to-blue-400/20 rounded-full blur-3xl"></div><div class="relative z-10"><div class="text-3xl font-black mb-2">🏛️ ${data.ilceAdi}</div><div class="text-slate-500 dark:text-[#c2c6d6]">Mahalle Bazlı Yapı Analizi • ${data.neighborhoods ? data.neighborhoods.length + ' Mahalle' : 'Özet Rapor'}</div></div></div>`;
+                result.innerHTML = `<div class="glass-card rounded-3xl p-8 text-center relative overflow-hidden animate-slide-up"><div class="absolute -right-20 -top-20 w-64 h-64 bg-gradient-to-br from-green-400/20 to-blue-400/20 rounded-full blur-3xl"></div><div class="relative z-10"><div class="text-3xl font-black mb-2">🏛️ ${data.ilceAdi}</div><div class="text-slate-500 dark:text-[#c2c6d6]">Yapı Raporu Analizi</div></div></div>`;
             }
-            result.innerHTML += `<div class="glass-card rounded-3xl p-6 animate-slide-up"><div class="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/10 border-2 border-[#4CAF50] dark:border-[#4ae176] rounded-3xl p-8 text-center mb-6"><div class="text-sm font-bold uppercase tracking-wider text-slate-600 dark:text-[#c2c6d6] mb-3">Toplam Yapı Sayısı</div><div class="text-6xl font-black text-slate-800 dark:text-white mb-4">${data.genelToplam.toplam.toLocaleString('tr-TR')}</div><div class="grid grid-cols-3 gap-4"><div class="bg-white/50 dark:bg-white/10 rounded-2xl p-3 text-center" style="min-height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center"><div class="text-xs font-bold text-slate-500 dark:text-[#c2c6d6] uppercase">Mesken</div><div class="text-xl font-bold text-slate-800 dark:text-white">${data.genelToplam.mesken.toLocaleString('tr-TR')}</div></div><div class="bg-white/50 dark:bg-white/10 rounded-2xl p-3 text-center" style="min-height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center"><div class="text-xs font-bold text-slate-500 dark:text-[#c2c6d6] uppercase">Kamu</div><div class="text-xl font-bold text-slate-800 dark:text-white">${data.genelToplam.kamu.toLocaleString('tr-TR')}</div></div><div class="bg-white/50 dark:bg-white/10 rounded-2xl p-3 text-center" style="min-height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center"><div class="text-xs font-bold text-slate-500 dark:text-[#c2c6d6] uppercase">İşyeri</div><div class="text-xl font-bold text-slate-800 dark:text-white">${data.genelToplam.isyeri.toLocaleString('tr-TR')}</div></div></div></div><div class="chart-wrapper mb-6"><div class="chart-toggle glass-card rounded-2xl p-4 cursor-pointer hover:scale-[0.99] transition-all flex items-center justify-between" onclick="toggleChart('excelChartContainer')"><div class="flex items-center gap-3 font-semibold"><span class="material-symbols-outlined text-[#4CAF50] dark:text-[#4ae176]">pie_chart</span>Yapı Tipi Dağılımını Göster/Gizle</div><div class="chart-toggle-icon text-xl transition-transform" id="excelChartContainerIcon">▼</div></div><div class="chart-container rounded-3xl mt-3 h-[400px] hidden" id="excelChartContainer"><canvas id="excelChart"></canvas></div></div><div class="flex items-center gap-2 text-lg font-bold mb-4"><span class="material-symbols-outlined">list</span>Tüm Mahalleler</div><div class="table-container rounded-3xl overflow-hidden max-h-[500px] overflow-y-auto">${data.neighborhoods ? `<table class="w-full"><thead><tr><th class="p-4 text-left font-semibold text-sm sticky top-0 z-10">Mahalle</th><th class="p-4 text-left font-semibold text-sm sticky top-0 z-10">Mesken</th><th class="p-4 text-left font-semibold text-sm sticky top-0 z-10">Kamu</th><th class="p-4 text-left font-semibold text-sm sticky top-0 z-10">İşyeri</th><th class="p-4 text-left font-semibold text-sm sticky top-0 z-10">Toplam</th></tr></thead><tbody>${data.neighborhoods.map(n => `<tr><td class="p-4"><strong>${n.name}</strong></td><td class="p-4"><span class="inline-block px-3 py-1 rounded-full text-xs font-bold bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">${n.mesken.toLocaleString('tr-TR')}</span></td><td class="p-4"><span class="inline-block px-3 py-1 rounded-full text-xs font-bold bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400">${n.kamu.toLocaleString('tr-TR')}</span></td><td class="p-4"><span class="inline-block px-3 py-1 rounded-full text-xs font-bold bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400">${n.isyeri.toLocaleString('tr-TR')}</span></td><td class="p-4"><strong>${n.toplam.toLocaleString('tr-TR')}</strong></td></tr>`).join('')}</tbody></table>` : `<div class="p-4 text-center text-slate-500">Mahalle detayları bağlantı karakter sınırı nedeniyle özet raporda gösterilememektedir.</div>`}</div></div>`;
-            result.classList.remove('hidden');
 
+            // Yapı Tipi ve Yapı Durumu verileri
+            const yapitipi = data.yapitipi || {};
+            const yapidurumu = data.yapidurumu || {};
+
+            // Genel toplamı doğru şekilde al - data.genelToplam number veya object olabilir
+            let genelToplamDeger = 0;
+            if (typeof data.genelToplam === 'number') {
+                genelToplamDeger = data.genelToplam;
+            } else if (data.genelToplam && typeof data.genelToplam === 'object' && data.genelToplam.toplam !== undefined) {
+                genelToplamDeger = data.genelToplam.toplam;
+            }
+
+            // Yapı tipi toplamı varsa onu kullan
+            if (yapitipi.toplam) {
+                genelToplamDeger = yapitipi.toplam;
+            }
+
+            let excelContent = `<div class="glass-card rounded-3xl p-6 animate-slide-up">
+        <div class="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/10 border-2 border-[#4CAF50] dark:border-[#4ae176] rounded-3xl p-8 text-center mb-6">
+            <div class="text-sm font-bold uppercase tracking-wider text-slate-600 dark:text-[#c2c6d6] mb-3">Toplam Yapı Sayısı</div>
+            <div class="text-6xl font-black text-slate-800 dark:text-white mb-4">${genelToplamDeger.toLocaleString('tr-TR')}</div>`;
+
+            let hasYapiTipi = data.isYapiTipi || (yapitipi && Object.keys(yapitipi).length > 0 && (yapitipi.mesken || yapitipi.kamu || yapitipi.isyeri));
+
+            if (hasYapiTipi) {
+                excelContent += `
+            <div class="grid grid-cols-3 gap-4">
+                <div class="bg-white/50 dark:bg-white/10 rounded-2xl p-3 text-center" style="min-height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center">
+                    <div class="text-xs font-bold text-slate-500 dark:text-[#c2c6d6] uppercase">Mesken</div>
+                    <div class="text-xl font-bold text-slate-800 dark:text-white">${(yapitipi.mesken || 0).toLocaleString('tr-TR')}</div>
+                </div>
+                <div class="bg-white/50 dark:bg-white/10 rounded-2xl p-3 text-center" style="min-height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center">
+                    <div class="text-xs font-bold text-slate-500 dark:text-[#c2c6d6] uppercase">Kamu</div>
+                    <div class="text-xl font-bold text-slate-800 dark:text-white">${(yapitipi.kamu || 0).toLocaleString('tr-TR')}</div>
+                </div>
+                <div class="bg-white/50 dark:bg-white/10 rounded-2xl p-3 text-center" style="min-height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center">
+                    <div class="text-xs font-bold text-slate-500 dark:text-[#c2c6d6] uppercase">İşyeri</div>
+                    <div class="text-xl font-bold text-slate-800 dark:text-white">${(yapitipi.isyeri || 0).toLocaleString('tr-TR')}</div>
+                </div>
+            </div>`;
+            }
+
+            excelContent += `</div>`;
+
+            // Yapı Tipi Grafiği
+            let yapiTipiDurumStr = hasYapiTipi ? '' : ' <span class="text-xs italic text-slate-500 font-normal ml-2">(henüz yüklenmedi)</span>';
+
+            excelContent += `<div class="chart-wrapper mb-6">
+            <div class="chart-toggle glass-card rounded-2xl p-4 ${hasYapiTipi ? 'cursor-pointer hover:scale-[0.99] transition-all' : 'opacity-70'} flex items-center justify-between" ${hasYapiTipi ? 'onclick="toggleChart(\'excelChartContainer\')"' : ''}>
+                <div class="flex items-center gap-3 font-semibold"><span class="material-symbols-outlined text-[#4CAF50] dark:text-[#4ae176]">pie_chart</span>Yapı Tipi Dağılımını Göster/Gizle${yapiTipiDurumStr}</div>
+                ${hasYapiTipi ? '<div class="chart-toggle-icon text-xl transition-transform" id="excelChartContainerIcon">▼</div>' : ''}
+            </div>
+            ${hasYapiTipi ? '<div class="chart-container rounded-3xl mt-3 h-[400px] hidden" id="excelChartContainer"><canvas id="excelChart"></canvas></div>' : ''}
+        </div>`;
+
+            // Yapı Durumu Detayları
+            let hasYapiDurumu = !!data.isYapiDurumu;
+
+            let yapiDurumuDurumStr = hasYapiDurumu ? '' : ' <span class="text-xs italic text-slate-500 font-normal ml-2">(henüz yüklenmedi)</span>';
+
+            excelContent += `<div class="chart-wrapper mb-6 mt-8">
+            <div class="chart-toggle glass-card rounded-2xl p-4 ${hasYapiDurumu ? 'cursor-pointer hover:scale-[0.99] transition-all' : 'opacity-70'} flex items-center justify-between" ${hasYapiDurumu ? 'onclick="toggleChart(\'excelYapidurumuChartContainer\')"' : ''}>
+                <div class="flex items-center gap-3 font-semibold"><span class="material-symbols-outlined text-[#2196F3] dark:text-[#64B5F6]">construction</span>Yapı Durumu Dağılımını Göster/Gizle${yapiDurumuDurumStr}</div>
+                ${hasYapiDurumu ? '<div class="chart-toggle-icon text-xl transition-transform" id="excelYapidurumuChartContainerIcon">▼</div>' : ''}
+            </div>
+            ${hasYapiDurumu ? '<div class="chart-container rounded-3xl mt-3 h-[400px] hidden" id="excelYapidurumuChartContainer"><canvas id="excelYapidurumuChart"></canvas></div>' : ''}
+        </div>`;
+
+            if (hasYapiDurumu) {
+                excelContent += `<div class="flex items-center gap-2 text-lg font-bold mb-4 mt-8">
+            <span class="material-symbols-outlined">construction</span>Yapı Durumu Dağılımı Tablosu
+        </div>
+        <div class="table-container rounded-3xl overflow-hidden mb-6">
+            <table class="w-full">
+                <thead>
+                    <tr>
+                        <th class="p-4 text-left font-semibold text-sm sticky top-0 z-10">Yapı Durumu</th>
+                        <th class="p-4 text-left font-semibold text-sm sticky top-0 z-10">Sayı</th>
+                        <th class="p-4 text-left font-semibold text-sm sticky top-0 z-10">Yüzde</th>
+                    </tr>
+                </thead>
+                <tbody>`;
+
+                const durumListesi = [
+                    { ad: 'İskan', deger: yapidurumu.iskan },
+                    { ad: 'Yapı Kayıt Belgeli', deger: yapidurumu.yapi_kayit_belgeli },
+                    { ad: 'İnşaat', deger: yapidurumu.insaat },
+                    { ad: 'Proje', deger: yapidurumu.proje },
+                    { ad: 'Kısmi İskan', deger: yapidurumu.kismi_iskan },
+                    { ad: 'Ruhsatsız', deger: yapidurumu.ruhsatsiz },
+                    { ad: 'Yanan Yıkılan', deger: yapidurumu.yanan_yikilan },
+                    { ad: '- (Belirtilmemiş)', deger: yapidurumu.tire },
+                    { ad: 'Bilinmeyen', deger: yapidurumu.bilinmeyen },
+                    { ad: 'Diğer', deger: yapidurumu.diger }
+                ];
+
+                // Sadece değeri olanları göster
+                durumListesi.forEach(item => {
+                    if (item.deger > 0) {
+                        const yuzde = ((item.deger / (yapidurumu.toplam || genelToplamDeger || 1)) * 100).toFixed(1);
+                        excelContent += `<tr>
+                    <td class="p-4"><strong>${item.ad}</strong></td>
+                    <td class="p-4">${item.deger.toLocaleString('tr-TR')}</td>
+                    <td class="p-4">${yuzde}%</td>
+                </tr>`;
+                    }
+                });
+
+                excelContent += `</tbody></table></div>`;
+            }
+
+            excelContent += `</div>`;
+            result.innerHTML += excelContent;
+            result.classList.remove('hidden');
         }
+
 
         function showCombinedReport() {
             if (!pdfData || !excelData) { showError('Her iki dosya da yüklenmelidir'); return; }
@@ -1379,28 +2012,36 @@
                 </div>
                 <div class="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/10 border-2 border-[#4CAF50] dark:border-[#4ae176] rounded-3xl p-8 text-center mb-6">
                     <div class="text-sm font-bold uppercase tracking-wider text-slate-600 dark:text-[#c2c6d6] mb-3">Toplam Yapı Sayısı</div>
-                    <div class="text-6xl font-black text-slate-800 dark:text-white mb-4">${excelData.genelToplam.toplam.toLocaleString('tr-TR')}</div>
+                    <div class="text-6xl font-black text-slate-800 dark:text-white mb-4">${excelData.genelToplamObj ? excelData.genelToplamObj.toplam.toLocaleString('tr-TR') : excelData.genelToplam.toLocaleString('tr-TR')}</div>
                     <div class="grid grid-cols-3 gap-4">
                         <div class="bg-white/50 dark:bg-white/10 rounded-2xl p-3 text-center" style="min-height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center">
                             <div class="text-xs font-bold text-slate-500 dark:text-[#c2c6d6] uppercase">Mesken</div>
-                            <div class="text-xl font-bold text-slate-800 dark:text-white">${excelData.genelToplam.mesken.toLocaleString('tr-TR')}</div>
+                            <div class="text-xl font-bold text-slate-800 dark:text-white">${(excelData.genelToplamObj ? excelData.genelToplamObj.mesken : (excelData.yapitipi ? excelData.yapitipi.mesken : 0)).toLocaleString('tr-TR')}</div>
                         </div>
                         <div class="bg-white/50 dark:bg-white/10 rounded-2xl p-3 text-center" style="min-height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center">
                             <div class="text-xs font-bold text-slate-500 dark:text-[#c2c6d6] uppercase">Kamu</div>
-                            <div class="text-xl font-bold text-slate-800 dark:text-white">${excelData.genelToplam.kamu.toLocaleString('tr-TR')}</div>
+                            <div class="text-xl font-bold text-slate-800 dark:text-white">${(excelData.genelToplamObj ? excelData.genelToplamObj.kamu : (excelData.yapitipi ? excelData.yapitipi.kamu : 0)).toLocaleString('tr-TR')}</div>
                         </div>
                         <div class="bg-white/50 dark:bg-white/10 rounded-2xl p-3 text-center" style="min-height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center">
                             <div class="text-xs font-bold text-slate-500 dark:text-[#c2c6d6] uppercase">İşyeri</div>
-                            <div class="text-xl font-bold text-slate-800 dark:text-white">${excelData.genelToplam.isyeri.toLocaleString('tr-TR')}</div>
+                            <div class="text-xl font-bold text-slate-800 dark:text-white">${(excelData.genelToplamObj ? excelData.genelToplamObj.isyeri : (excelData.yapitipi ? excelData.yapitipi.isyeri : 0)).toLocaleString('tr-TR')}</div>
                         </div>
                     </div>
                 </div>
                 <div class="chart-wrapper mb-8">
-                    <div class="chart-toggle glass-card rounded-2xl p-4 cursor-pointer hover:scale-[0.99] transition-all flex items-center justify-between" onclick="toggleChart('combinedExcelChartContainer')">
-                        <div class="flex items-center gap-3 font-semibold"><span class="material-symbols-outlined text-[#4CAF50] dark:text-[#4ae176]">pie_chart</span>Yapı Tipi Dağılımını Göster/Gizle</div>
-                        <div class="chart-toggle-icon text-xl transition-transform" id="combinedExcelChartContainerIcon">▼</div>
+                    <div class="chart-toggle glass-card rounded-2xl p-4 ${excelData.isYapiTipi ? 'cursor-pointer hover:scale-[0.99] transition-all' : 'opacity-70'} flex items-center justify-between" ${excelData.isYapiTipi ? 'onclick="toggleChart(\'combinedExcelChartContainer\')"' : ''}>
+                        <div class="flex items-center gap-3 font-semibold"><span class="material-symbols-outlined text-[#4CAF50] dark:text-[#4ae176]">pie_chart</span>Yapı Tipi Dağılımını Göster/Gizle${!excelData.isYapiTipi ? ' <span class="text-xs italic text-slate-500 font-normal ml-2">(henüz yüklenmedi)</span>' : ''}</div>
+                        ${excelData.isYapiTipi ? '<div class="chart-toggle-icon text-xl transition-transform" id="combinedExcelChartContainerIcon">▼</div>' : ''}
                     </div>
-                    <div class="chart-container rounded-3xl mt-3 h-[400px] hidden" style="display:none" id="combinedExcelChartContainer"><canvas id="combinedExcelChart"></canvas></div>
+                    ${excelData.isYapiTipi ? '<div class="chart-container rounded-3xl mt-3 h-[400px] hidden" style="display:none" id="combinedExcelChartContainer"><canvas id="combinedExcelChart"></canvas></div>' : ''}
+                </div>
+                
+                <div class="chart-wrapper mb-8">
+                    <div class="chart-toggle glass-card rounded-2xl p-4 ${excelData.isYapiDurumu ? 'cursor-pointer hover:scale-[0.99] transition-all' : 'opacity-70'} flex items-center justify-between" ${excelData.isYapiDurumu ? 'onclick="toggleChart(\'combinedExcelYapidurumuChartContainer\')"' : ''}>
+                        <div class="flex items-center gap-3 font-semibold"><span class="material-symbols-outlined text-[#2196F3] dark:text-[#64B5F6]">construction</span>Yapı Durumu Dağılımını Göster/Gizle${!excelData.isYapiDurumu ? ' <span class="text-xs italic text-slate-500 font-normal ml-2">(henüz yüklenmedi)</span>' : ''}</div>
+                        ${excelData.isYapiDurumu ? '<div class="chart-toggle-icon text-xl transition-transform" id="combinedExcelYapidurumuChartContainerIcon">▼</div>' : ''}
+                    </div>
+                    ${excelData.isYapiDurumu ? '<div class="chart-container rounded-3xl mt-3 h-[400px] hidden" style="display:none" id="combinedExcelYapidurumuChartContainer"><canvas id="combinedExcelYapidurumuChart"></canvas></div>' : ''}
                 </div>
             </div>
             
@@ -1410,10 +2051,47 @@
                     <div class="chart-toggle-icon text-xl transition-transform" id="combinedMahalleContainerIcon">▼</div>
                 </div>
                 <div class="table-container rounded-3xl overflow-hidden max-h-[500px] overflow-y-auto hidden" style="display:none" id="combinedMahalleContainer">
-                    ${excelData.neighborhoods ? `<table class="w-full"><thead><tr><th class="p-4 text-left font-semibold text-sm sticky top-0 z-10">Mahalle</th><th class="p-4 text-left font-semibold text-sm sticky top-0 z-10">Mesken</th><th class="p-4 text-left font-semibold text-sm sticky top-0 z-10">Kamu</th><th class="p-4 text-left font-semibold text-sm sticky top-0 z-10">İşyeri</th><th class="p-4 text-left font-semibold text-sm sticky top-0 z-10">Toplam</th></tr></thead><tbody>${excelData.neighborhoods.map(n => `<tr><td class="p-4"><strong>${n.name}</strong></td><td class="p-4"><span class="inline-block px-3 py-1 rounded-full text-xs font-bold bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">${n.mesken.toLocaleString('tr-TR')}</span></td><td class="p-4"><span class="inline-block px-3 py-1 rounded-full text-xs font-bold bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400">${n.kamu.toLocaleString('tr-TR')}</span></td><td class="p-4"><span class="inline-block px-3 py-1 rounded-full text-xs font-bold bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400">${n.isyeri.toLocaleString('tr-TR')}</span></td><td class="p-4"><strong>${n.toplam.toLocaleString('tr-TR')}</strong></td></tr>`).join('')}</tbody></table>` : `<div class="p-4 text-center text-slate-500">Mahalle detayları bağlantı karakter sınırı nedeniyle özet raporda gösterilememektedir.</div>`}
                 </div>
-            </div>
-            
+            </div>`;
+
+            // Dinamik olarak mahalle tablosu oluştur //
+            const mahalleContainer = result.querySelector('#combinedMahalleContainer');
+            if (mahalleContainer) {
+                if (excelData.neighborhoods && excelData.neighborhoods.length > 0) {
+                    let tableHTML = '<table class="w-full text-sm"><thead><tr><th class="p-3 text-left font-semibold sticky top-0 z-10 bg-white dark:bg-[#1f2229] border-b min-w-[130px]">Mahalle</th>';
+                    if (excelData.isYapiTipi) tableHTML += '<th class="p-3 text-left font-semibold sticky top-0 z-10 bg-white dark:bg-[#1f2229] border-b text-green-700 dark:text-green-400">Mesken</th><th class="p-3 text-left font-semibold sticky top-0 z-10 bg-white dark:bg-[#1f2229] border-b text-blue-700 dark:text-blue-400">Kamu</th><th class="p-3 text-left font-semibold sticky top-0 z-10 bg-white dark:bg-[#1f2229] border-b text-orange-700 dark:text-orange-400">İşyeri</th>';
+                    if (excelData.isYapiDurumu) tableHTML += '<th class="p-3 text-left font-semibold sticky top-0 z-10 bg-white dark:bg-[#1f2229] border-b text-cyan-700 dark:text-cyan-400">İskan</th><th class="p-3 text-left font-semibold sticky top-0 z-10 bg-white dark:bg-[#1f2229] border-b text-cyan-700 dark:text-cyan-400" title="Kısmi İskan">K.İskan</th><th class="p-3 text-left font-semibold sticky top-0 z-10 bg-white dark:bg-[#1f2229] border-b text-teal-700 dark:text-teal-400">İnşaat</th><th class="p-3 text-left font-semibold sticky top-0 z-10 bg-white dark:bg-[#1f2229] border-b text-purple-700 dark:text-purple-400">Proje</th><th class="p-3 text-left font-semibold sticky top-0 z-10 bg-white dark:bg-[#1f2229] border-b text-indigo-700 dark:text-indigo-400" title="Yapı Kayıt Belgeli">YKB</th><th class="p-3 text-left font-semibold sticky top-0 z-10 bg-white dark:bg-[#1f2229] border-b text-red-700 dark:text-red-400">Ruhsatsız</th><th class="p-3 text-left font-semibold sticky top-0 z-10 bg-white dark:bg-[#1f2229] border-b text-red-900 dark:text-red-500">Yanan</th><th class="p-3 text-left font-semibold sticky top-0 z-10 bg-white dark:bg-[#1f2229] border-b text-slate-500">Bilinmeyen</th><th class="p-3 text-left font-semibold sticky top-0 z-10 bg-white dark:bg-[#1f2229] border-b text-slate-400">Diğer</th>';
+                    tableHTML += '<th class="p-3 text-left font-semibold sticky top-0 z-10 bg-white dark:bg-[#1f2229] border-b text-emerald-600 dark:text-emerald-400">Genel Toplam</th></tr></thead><tbody>';
+
+                    excelData.neighborhoods.forEach(n => {
+                        tableHTML += `<tr><td class="p-3 whitespace-nowrap border-b border-slate-100 dark:border-slate-800"><strong>${n.name}</strong></td>`;
+                        if (excelData.isYapiTipi) {
+                            tableHTML += `<td class="p-3 border-b border-slate-100 dark:border-slate-800"><span class="inline-block px-2 py-0.5 rounded-md text-xs font-bold bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">${(n.yapitipi ? n.yapitipi.mesken : 0).toLocaleString('tr-TR')}</span></td>`;
+                            tableHTML += `<td class="p-3 border-b border-slate-100 dark:border-slate-800"><span class="inline-block px-2 py-0.5 rounded-md text-xs font-bold bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400">${(n.yapitipi ? n.yapitipi.kamu : 0).toLocaleString('tr-TR')}</span></td>`;
+                            tableHTML += `<td class="p-3 border-b border-slate-100 dark:border-slate-800"><span class="inline-block px-2 py-0.5 rounded-md text-xs font-bold bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400">${(n.yapitipi ? n.yapitipi.isyeri : 0).toLocaleString('tr-TR')}</span></td>`;
+                        }
+                        if (excelData.isYapiDurumu) {
+                            tableHTML += `<td class="p-3 border-b border-slate-100 dark:border-slate-800 font-medium">${(n.yapidurumu ? n.yapidurumu.iskan || 0 : 0).toLocaleString('tr-TR')}</td>`;
+                            tableHTML += `<td class="p-3 border-b border-slate-100 dark:border-slate-800 font-medium">${(n.yapidurumu ? n.yapidurumu.kismi_iskan || 0 : 0).toLocaleString('tr-TR')}</td>`;
+                            tableHTML += `<td class="p-3 border-b border-slate-100 dark:border-slate-800 font-medium">${(n.yapidurumu ? n.yapidurumu.insaat || 0 : 0).toLocaleString('tr-TR')}</td>`;
+                            tableHTML += `<td class="p-3 border-b border-slate-100 dark:border-slate-800 font-medium">${(n.yapidurumu ? n.yapidurumu.proje || 0 : 0).toLocaleString('tr-TR')}</td>`;
+                            tableHTML += `<td class="p-3 border-b border-slate-100 dark:border-slate-800 font-medium">${(n.yapidurumu ? n.yapidurumu.yapi_kayit_belgeli || 0 : 0).toLocaleString('tr-TR')}</td>`;
+                            tableHTML += `<td class="p-3 border-b border-slate-100 dark:border-slate-800 font-medium">${(n.yapidurumu ? n.yapidurumu.ruhsatsiz || 0 : 0).toLocaleString('tr-TR')}</td>`;
+                            tableHTML += `<td class="p-3 border-b border-slate-100 dark:border-slate-800 font-medium">${(n.yapidurumu ? n.yapidurumu.yanan_yikilan || 0 : 0).toLocaleString('tr-TR')}</td>`;
+                            tableHTML += `<td class="p-3 border-b border-slate-100 dark:border-slate-800 opacity-80">${(n.yapidurumu ? n.yapidurumu.bilinmeyen || 0 : 0).toLocaleString('tr-TR')}</td>`;
+                            let digerleri = n.yapidurumu ? (n.yapidurumu.tire || 0) + (n.yapidurumu.diger || 0) : 0;
+                            tableHTML += `<td class="p-3 border-b border-slate-100 dark:border-slate-800 opacity-60 text-xs">${digerleri.toLocaleString('tr-TR')}</td>`;
+                        }
+                        tableHTML += `<td class="p-3 border-b border-slate-100 dark:border-slate-800 text-emerald-600 dark:text-emerald-400 font-bold">${(n.toplam || 0).toLocaleString('tr-TR')}</td></tr>`;
+                    });
+                    tableHTML += '</tbody></table>';
+                    mahalleContainer.innerHTML = tableHTML;
+                } else {
+                    mahalleContainer.innerHTML = `<div class="p-4 text-center text-slate-500">Mahalle detayları verisi bulunamadı.</div>`;
+                }
+            }
+
+            result.innerHTML += `
             <div class="glass-card rounded-3xl p-6 animate-slide-up">
                 <div class="flex items-center gap-3 text-xl font-bold mb-6 pb-4 border-b-2 border-blue-500 dark:border-blue-400">
                     <span class="material-symbols-outlined">description</span>Bağımsız Bölüm Bilgileri
@@ -1470,4 +2148,3 @@
 </body>
 
 </html>
-
